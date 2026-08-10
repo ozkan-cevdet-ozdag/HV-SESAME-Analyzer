@@ -68,7 +68,6 @@ HV-SESAME Analyzer can generate:
 - PDF project reports
 - KMZ files for Google Earth
 - ESRI Shapefiles
-- CSV attribute tables
 - HSAP project files
 
 ## Citation
