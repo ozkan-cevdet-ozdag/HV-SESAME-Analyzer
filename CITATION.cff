@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use HV-SESAME Analyzer in your research, please cite this software."
+title: "HV-SESAME Analyzer"
+type: software
+authors:
+  - family-names: "Özdağ"
+    given-names: "Özkan Cevdet"
+version: "1.0.0"
+date-released: "2026-08-10"
+license: "MIT"
+repository-code: "https://github.com/ozkan-cevdet-ozdag/HV-SESAME-Analyzer"
+keywords:
+  - "HVSR"
+  - "SESAME"
+  - "ambient vibration"
+  - "site characterization"
+  - "microzonation"
+  - "Geopsy"
+  - "MATLAB"
