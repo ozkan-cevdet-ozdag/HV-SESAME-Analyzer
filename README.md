@@ -91,10 +91,11 @@ The repository contains:
 
 - `HV_SESAME_ANALYZER_V1.m` — main MATLAB source code
 - `README.md` — software description and quick-test instructions
-- `User_Guide.md` — detailed user instructions
-- `Example Data/` — example Geopsy `.hv` and `.log` files for testing
+- `HV_SESAME_Analyzer_V1_User_Guide.pdf` — detailed user instructions
+- - `Example Data/` — example Geopsy `.hv` and `.log` files, station coordinates, and example software outputs for reproducing the test workflow
 - `LICENSE` — open-source software license
 - `CITATION.cff` — citation information
+- Also example output files (GIS files, KMZ and PDF report) can ve found at "Example Data" folder. 
 
 
 ### Running the Quick Test
@@ -111,15 +112,26 @@ The repository contains:
 
 5. Click `Select Folder` and select the `Example Data` directory containing the paired Geopsy `.hv` and `.log` files.
 
-6. Click `Select Coordinates` and select the example coordinate `.txt` or `.dat` file provided in the `Example Data`  directory.
+6. Click `Select Coordinates` and select the example coordinate `.txt` or `.dat` file provided in the `Example Data` (loc.txt)  directory.
 
 7. Verify the WGS 84 UTM zone displayed in the interface and modify it if required.
 
 8. Click `Run` to start the automated analysis.
 
-9. After completion, select individual stations from the station list to inspect the H/V curve, peak parameters, Reliability and Clear-Peak results, and individual SESAME criteria V1–V9.
+The software will automatically:
 
-10. The `PDF Report`, `KMZ`, and `GIS` buttons can be used to reproduce the corresponding example outputs included in the repository.
+- identify paired `.hv` and `.log` files,
+- extract the parameters required for SESAME evaluation,
+- evaluate SESAME criteria V1–V9,
+- calculate RS, CPS, and QS,
+- determine the Reliability and Clear-Peak group-level results,
+- assign the final quality class,
+- generate project-level statistics, and
+- display station-level results within the graphical interface.
+
+10. After completion, select individual stations from the station list to inspect the H/V curve, peak parameters, Reliability and Clear-Peak results, and individual SESAME criteria V1–V9.
+
+11. The `PDF Report`, `KMZ`, and `GIS` buttons can be used to reproduce the corresponding example outputs included in the repository.
 
     
 
