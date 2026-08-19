@@ -26,7 +26,7 @@ HV-SESAME Analyzer provides:
 - GIS-compatible shapefile export
 - Google Earth KMZ export
 - Project saving and reloading
-- Optional import of station coordinates for spatial visualization
+- Import of station coordinates (X, Y, Z, Name) for project analysis and spatial visualization
 
 ## SESAME Quality Assessment
 
@@ -96,15 +96,12 @@ The repository contains:
 - `LICENSE` — open-source software license
 - `CITATION.cff` — citation information
 
-## Quick Test
-
-A small example dataset is included in the `Example Data` directory so that the main workflow can be tested without preparing a new HVSR dataset.
 
 ### Running the Quick Test
 
 1. Download or clone this repository.
 
-2. Open MATLAB R2026a.
+2. Open MATLAB.
 
 3. Set the downloaded repository directory as the MATLAB Current Folder.
 
@@ -112,25 +109,19 @@ A small example dataset is included in the `Example Data` directory so that the 
 
    `HV_SESAME_ANALYZER_V1.m`
 
-5. In the graphical user interface, select the project-analysis workflow.
+5. Click `Select Folder` and select the `Example Data` directory containing the paired Geopsy `.hv` and `.log` files.
 
-6. When prompted for the input data, select the paired `.hv` and `.log` files provided in the `Example Data` directory.
+6. Click `Select Coordinates` and select the example coordinate `.txt` or `.dat` file provided in the `Example Data`  directory.
 
-7. If spatial visualization is required, use the example coordinate information provided with the example dataset and define the appropriate UTM zone when prompted.
+7. Verify the WGS 84 UTM zone displayed in the interface and modify it if required.
 
-8. Start the analysis.
+8. Click `Run` to start the automated analysis.
 
-The software will automatically:
+9. After completion, select individual stations from the station list to inspect the H/V curve, peak parameters, Reliability and Clear-Peak results, and individual SESAME criteria V1–V9.
 
-- validate the selected input files,
-- extract the required parameters from the Geopsy outputs,
-- evaluate SESAME criteria V1–V9,
-- calculate RS, CPS, and QS,
-- determine the Reliability and Clear-Peak group-level results,
-- assign the final quality class, and
-- display the results within the graphical interface.
+10. The `PDF Report`, `KMZ`, and `GIS` buttons can be used to reproduce the corresponding example outputs included in the repository.
 
-The individual H/V curves and criterion-level PASS/FAIL results can then be inspected through the application interface. Project reports and spatial outputs can also be generated using the corresponding export functions.
+    
 
 ## Input Data
 
@@ -143,7 +134,8 @@ For each measurement, a corresponding pair of files is required:
 
 The base filenames of the `.hv` and `.log` files should correspond to the same measurement.
 
-Optional station-coordinate information can be imported for project mapping and GIS/KMZ generation.
+A station-coordinate file is required in the current V1 workflow. The file must contain X, Y, Z, and Name fields, where the station names correspond to the base filenames of the paired Geopsy .hv and .log files.
+
 
 ## Output Products
 
