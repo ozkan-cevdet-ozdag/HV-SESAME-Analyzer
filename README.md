@@ -155,11 +155,13 @@ Depending on the selected workflow and available coordinate information, HV-SESA
 - weighted Quality Score (QS),
 - Accepted / Controlled Acceptance / Rejected classifications,
 - project-level statistical summaries,
-- PDF reports,
-- GIS-compatible shapefiles,
-- Google Earth KMZ files, and
-- reusable project files.
+- PDF reports*,
+- GIS-compatible shapefiles*,
+- Google Earth KMZ files*, and
+- reusable project files*.
 
+* All example outputs can be found at "Example Data" folder.
+  
 ## Reproducibility
 
 The software preserves criterion-level results for each measurement, allowing the final classification to be traced back to the corresponding SESAME V1–V9 evaluations.
@@ -170,7 +172,7 @@ The example dataset supplied with this repository is intended to allow users and
 
 Additional instructions for using the software are available in:
 
-`User_Guide.md`
+`HV_SESAME_Analyzer_V1_User_Guide.pdf`
 
 ## Source Code Availability
 
