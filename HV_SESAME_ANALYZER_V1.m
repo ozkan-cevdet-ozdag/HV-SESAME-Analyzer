@@ -1283,7 +1283,7 @@ end
 crit.V9 = (tab(I(2),5)<tetaf0);
 
 crit.reliable   = all([crit.V1 crit.V2 crit.V3]);
-crit.clear      = all([crit.V4 crit.V5 crit.V6 crit.V7 crit.V8 crit.V9]);
+crit.clear      = sum([crit.V4 crit.V5 crit.V6 crit.V7 crit.V8 crit.V9]) >= 5;
 crit.controlled = xor(crit.reliable, crit.clear);
 crit.allPass    = crit.reliable && crit.clear;
 
