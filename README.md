@@ -6,7 +6,7 @@ The software is designed for project-scale quality control of HVSR datasets proc
 
 The software was developed in connection with the manuscript:
 
-"HV-SESAME Analyzer: An Automated MATLAB-Based Software for Standardized SESAME Quality Assessment of Project-Scale HVSR Datasets"
+"Automated SESAME-Based Quality Assurance of Ambient-Vibration Measurements for Project-Scale HVSR Analysis: The HV-SESAME Analyzer"
 
 ## Main Features
 
