@@ -183,7 +183,7 @@ set(APP.txtStationHint,'FontSize',12.5);
 set(APP.btnAbout,'FontSize',13.5);
 
 % H/V plot tick labels and axis labels use explicit point sizes. Individual
-% plot annotations are assigned in hvsa_plot_spectrum.m.
+% plot annotations are assigned by the local hvsa_plot_spectrum function.
 set(APP.ax,'FontUnits','points','FontSize',16);
 xlabel(APP.ax,'Frequency (Hz)','FontSize',16);
 ylabel(APP.ax,'H/V amplitude','FontSize',16);
@@ -1205,7 +1205,7 @@ end
 %% ========================================================================
 function result = runSesameCheck(noise, logFile)
 % Modular SESAME assessment from documented, labelled Geopsy fields.
-% New parser/evaluator sources are required alongside this GUI .m file.
+% The parser and evaluator are included as local functions below.
 spectrum = hvsa_parse_hv(noise);
 windows = hvsa_parse_log(logFile);
 result = hvsa_evaluate_sesame(spectrum,windows);
@@ -1213,7 +1213,7 @@ end
 
 %% ========================================================================
 function plotHVwithCriteria(res,ax)
-% Delegate plotting to an independently organized visualization module.
+% Delegate plotting to the local H/V visualization function.
 if nargin < 2
     ax = gca;
 end
@@ -1726,7 +1726,7 @@ fprintf(fid,'  Z         : Elevation\n');
 fprintf(fid,'  V1-V9     : Individual SESAME criterion results (1=PASS, 0=FAIL)\n');
 fprintf(fid,'              Values are numeric in both CSV and Shapefile DBF.\n');
 fprintf(fid,'              Criterion codes represent the nine checks in SESAME (2004).\n');
-fprintf(fid,'  Note      : Display maps use relative, shifted UTM distances.\n');
+fprintf(fid,'  Note      : Display maps show the supplied input X/Y coordinates in kilometres.\n');
 fprintf(fid,'              CSV and Shapefile retain the input UTM coordinates.\n');
 
 fclose(fid);
@@ -2030,7 +2030,7 @@ end
 function createPDFReportCompat(finalTable, allResults, outPdf)
 forceLightTheme();
 % PDF report generator with transparent, basemap-free project maps.
-% - Station coordinates are displayed as relative UTM distances in kilometres.
+% - Map axes display the supplied X/Y coordinates in kilometres (input metres / 1000).
 % - Shapes as well as colours convey quality categories.
 % - Original GIS coordinate values are not modified.
 
@@ -2346,9 +2346,9 @@ text(ax,0.955,0.035,sprintf('Generated: %s',datestr(now,'dd.mm.yyyy HH:MM')), ..
 end
 
 function fig = makeProjectMapFigure(finalTable,mapType)
-% Basemap-free relative-coordinate project map.
-% The input UTM coordinates may be shifted for publication/privacy.
-% To avoid a misleading geographical background, show relative spacing only.
+% Basemap-free project map using the supplied input coordinates.
+% Input X/Y coordinates are converted from metres to kilometres for display only.
+% No geographic basemap is used.
 
 fig = figure('Visible','off','Units','pixels','Position',[100 100 1500 850], ...
     'Color',[0.96 0.97 0.98],'InvertHardcopy','off');
@@ -2375,7 +2375,7 @@ rectangle(ax0,'Position',[0.025 0.875 0.95 0.085], ...
     'FaceColor','white','EdgeColor',[0.82 0.86 0.90]);
 text(ax0,0.045,0.935,titleStr,'FontSize',18,'FontWeight','bold', ...
     'Color',[0.05 0.16 0.28],'VerticalAlignment','middle');
-text(ax0,0.045,0.900,[subtitleStr '  |  Relative station coordinates (no geographic basemap)'], ...
+text(ax0,0.045,0.900,[subtitleStr '  |  Input X/Y coordinates (no geographic basemap)'], ...
     'FontSize',10,'Color',[0.30 0.35 0.40],'VerticalAlignment','middle');
 
 rectangle(ax0,'Position',[0.045 0.100 0.680 0.760], ...
@@ -2388,14 +2388,15 @@ set(mapAx,'Color',[1 1 1],'XColor',[0.20 0.25 0.30], ...
 
 validXY = isfinite(finalTable.X) & isfinite(finalTable.Y);
 if any(validXY)
-    % The subtraction affects only figure display, NEVER saved GIS coordinates.
-    referenceX = min(finalTable.X(validXY));
-    referenceY = min(finalTable.Y(validXY));
-    xDisplay = (finalTable.X-referenceX)/1000;
-    yDisplay = (finalTable.Y-referenceY)/1000;
+    % Scale input coordinates (metres) to kilometres for map display only.
+    % No origin shift; GIS/KMZ input coordinates remain unchanged.
+    xDisplay = finalTable.X / 1000;
+    yDisplay = finalTable.Y / 1000;
     setupMapLimits(mapAx,xDisplay(validXY),yDisplay(validXY), ...
-        'Relative easting (km)','Relative northing (km)');
+        'Easting (input X, km)','Northing (input Y, km)');
     axis(mapAx,'equal'); % Keep distance scaling the same on both map axes.
+    mapAx.XAxis.Exponent = 0;
+    mapAx.YAxis.Exponent = 0;
     plotProjectPointsOnMap(mapAx,finalTable,mapType,xDisplay,yDisplay);
 elseif any(isfinite(finalTable.Lon) & isfinite(finalTable.Lat))
     validLL = isfinite(finalTable.Lon) & isfinite(finalTable.Lat);
@@ -2408,10 +2409,8 @@ else
         'Units','normalized','HorizontalAlignment','center');
 end
 
-title(mapAx,'Station distribution (schematic, no topography)', ...
+title(mapAx,'Station distribution (input coordinates, no topography)', ...
     'FontSize',11,'FontWeight','bold');
-text(ax0,0.095,0.125,'Map shows station separation only; no topography or site conditions implied.', ...
-    'FontSize',8.5,'Color',[0.30 0.34 0.38]);
 
 rectangle(ax0,'Position',[0.755 0.100 0.220 0.760], ...
     'FaceColor','white','EdgeColor',[0.82 0.86 0.90]);
@@ -3118,4 +3117,589 @@ lon = (deg2rad(lon0) + (Q5 - Q6 + Q7) ./ cos(fp));
 lat = rad2deg(lat);
 lon = rad2deg(lon);
 
+end
+
+%% ========================================================================
+%% Embedded Geopsy parsers, SESAME evaluator and visualization functions
+%% All seven modules below are copied intact from the validated modular source.
+%% ========================================================================
+
+%% --- hvsa_parse_hv.m (local function) ---------------------------
+function spectrum = hvsa_parse_hv(filename)
+%HVSA_PARSE_HV Read Geopsy HVSR spectrum using documented text labels.
+%   This parser is designed from the Geopsy text format, not fixed row numbers.
+%   It validates mandatory metadata and four numerical spectrum columns.
+%
+%   The frequency-range maxima in the Geopsy header are retained, even when
+%   the reported f0 is not the global maximum of the displayed mean curve.
+
+lines = hvsa_read_text_lines(filename);
+meta = struct('windows',[], 'f0',[], 'windowsForF0',[], ...
+              'f0Windows',[], 'amplitude',[]);
+frequencyHeader = 0;
+
+for k = 1:numel(lines)
+    item = strtrim(lines{k});
+    if ~startsWith(item,'#')
+        continue;
+    end
+    item = strtrim(regexprep(item,'^#\s*',''));
+    if startsWith(lower(item),'frequency')
+        frequencyHeader = k;
+        break;
+    end
+    meta.windows = readField(item,'number of windows',meta.windows);
+    meta.f0 = readField(item,'f0 from average',meta.f0);
+    meta.windowsForF0 = readField(item,'number of windows for f0',meta.windowsForF0);
+    meta.f0Windows = readField(item,'f0 from windows',meta.f0Windows);
+    meta.amplitude = readField(item,'peak amplitude',meta.amplitude);
+end
+
+if frequencyHeader == 0
+    error('HVSA:MissingTable','Missing Geopsy frequency-table header in %s.',filename);
+end
+mandatory = {'windows','f0','f0Windows','amplitude'};
+for j = 1:numel(mandatory)
+    if isempty(meta.(mandatory{j}))
+        error('HVSA:MissingMetadata','Missing Geopsy header field %s in %s.',mandatory{j},filename);
+    end
+end
+if numel(meta.windows)~=1 || numel(meta.f0)~=1 || numel(meta.amplitude)~=1 || numel(meta.f0Windows)~=3
+    error('HVSA:MetadataShape','Unexpected number of values in Geopsy header: %s.',filename);
+end
+if meta.windows < 1 || floor(meta.windows) ~= meta.windows || ...
+        ~(isfinite(meta.f0) && meta.f0 > 0 && isfinite(meta.amplitude) && meta.amplitude > 0)
+    error('HVSA:InvalidMetadata','Invalid windows, peak frequency, or amplitude in %s.',filename);
+end
+winStats = meta.f0Windows;
+if any(~isfinite(winStats)) || winStats(2)>winStats(1) || winStats(1)>winStats(3)
+    error('HVSA:BadFrequencyStatistics','Inconsistent f0-from-windows statistics in %s.',filename);
+end
+
+samples = zeros(0,4);
+for k = frequencyHeader+1:numel(lines)
+    row = strtrim(lines{k});
+    if isempty(row)
+        continue;
+    end
+    if startsWith(row,'#')
+        break;
+    end
+    nums = sscanf(row,'%f').';
+    if numel(nums) ~= 4 || any(~isfinite(nums))
+        error('HVSA:BadSpectrumRow','Invalid spectrum row at line %d in %s.',k,filename);
+    end
+    samples(end+1,:) = nums; %#ok<AGROW>
+end
+if size(samples,1)<3 || any(samples(:,1)<=0) || any(diff(samples(:,1))<=0) || any(samples(:,2:4)<=0,'all')
+    error('HVSA:InvalidSpectrum','Spectral frequencies/amplitudes are invalid in %s.',filename);
+end
+
+spectrum.file = filename;
+spectrum.nWindows = meta.windows;
+spectrum.nWindowsForF0 = meta.windowsForF0;
+spectrum.f0 = meta.f0;
+spectrum.A0 = meta.amplitude;
+spectrum.f0WindowMean = winStats(1);
+spectrum.f0WindowLower = winStats(2);
+spectrum.f0WindowUpper = winStats(3);
+spectrum.freq = samples(:,1);
+spectrum.meanHV = samples(:,2);
+spectrum.lowHV = samples(:,3);
+spectrum.highHV = samples(:,4);
+end
+
+function numbers = readField(line,label,numbers)
+if ~startsWith(lower(line),label)
+    return;
+end
+remainder = line(numel(label)+1:end);
+if isempty(remainder) || ~ismember(remainder(1),[' ' sprintf('\t') '='])
+    return;
+end
+suffix = strtrim(remainder);
+if startsWith(suffix,'=')
+    suffix = strtrim(suffix(2:end));
+end
+if isempty(regexp(suffix,'^[+-]?(?:\d|\.)','once'))
+    return;
+end
+numbers = sscanf(suffix,'%f').';
+end
+
+function lines = hvsa_read_text_lines(filename)
+fid = fopen(filename,'rt');
+if fid < 0
+    error('HVSA:CannotOpen','Cannot open %s.',filename);
+end
+cleanup = onCleanup(@()fclose(fid)); %#ok<NASGU>
+lines = cell(0,1);
+while ~feof(fid)
+    item = fgetl(fid);
+    if ischar(item)
+        lines{end+1,1} = item; %#ok<AGROW>
+    end
+end
+end
+
+%% --- hvsa_parse_log.m (local function) --------------------------
+function windows = hvsa_parse_log(filename)
+%HVSA_PARSE_LOG Read selected Geopsy time windows and their lengths.
+%   Identifies the 'Time Windows' section and parses the rows following
+%   the '# Start time ... Window length' header. Does not use fixed row
+%   numbers or regular-expression word-boundary assumptions.
+%
+%   Returns fields: file, lengths, count, totalDuration, declaredCount.
+%
+fid = fopen(filename,'rt');
+if fid < 0
+    error('HVSA:CannotOpen','Cannot open %s.',filename);
+end
+cleanup = onCleanup(@()fclose(fid)); %#ok<NASGU>
+
+lengths = zeros(0,1);
+inWindowSection = false;
+inDataTable = false;
+declaredCount = NaN;
+
+while ~feof(fid)
+    rawLine = fgetl(fid);
+    if ~ischar(rawLine)
+        break;
+    end
+    line = strtrim(rawLine);
+    lineLower = lower(line);
+
+    % This label distinguishes the selected-window table from the
+    % parameters and the earlier 'Windowing Log' section.
+    if ~inWindowSection
+        if strcmpi(line,'### Time Windows ###')
+            inWindowSection = true;
+        end
+        continue;
+    end
+
+    if strcmpi(line,'### End Time Windows ###')
+        break;
+    end
+
+    if ~inDataTable
+        if startsWith(lineLower,'# number')
+            equalsAt = strfind(line,'=');
+            if ~isempty(equalsAt)
+                declaredCount = str2double(strtrim(line(equalsAt(1)+1:end)));
+            end
+        elseif startsWith(line,'#') && ...
+                contains(lineLower,'start time') && ...
+                contains(lineLower,'window length')
+            inDataTable = true;
+        end
+        continue;
+    end
+
+    if isempty(line) || startsWith(line,'#')
+        continue;
+    end
+
+    fields = strsplit(line);  % Timestamp, timestamp, duration (seconds).
+    if numel(fields) ~= 3
+        error('HVSA:BadLogRow', ...
+            'Expected 3 columns in selected-window row: %s (%s).',line,filename);
+    end
+    seconds = str2double(fields{3});
+    if ~(isfinite(seconds) && seconds > 0)
+        error('HVSA:BadWindowLength', ...
+            'Invalid selected-window duration in %s: %s.',filename,line);
+    end
+    lengths(end+1,1) = seconds; %#ok<AGROW>
+end
+
+if ~inWindowSection
+    error('HVSA:MissingWindowSection', ...
+        'Geopsy LOG does not contain a Time Windows section: %s.',filename);
+end
+if ~inDataTable
+    error('HVSA:MissingWindowHeader', ...
+        'Geopsy LOG is missing the selected-window column header: %s.',filename);
+end
+if isempty(lengths)
+    error('HVSA:NoSelectedWindows', ...
+        'No selected-window rows found in Geopsy LOG %s.',filename);
+end
+if isfinite(declaredCount) && declaredCount ~= numel(lengths)
+    error('HVSA:DeclaredWindowMismatch', ...
+        'Geopsy LOG declares %d windows, but %d rows were parsed in %s.', ...
+        declaredCount,numel(lengths),filename);
+end
+
+windows.file = filename;
+windows.lengths = lengths;
+windows.count = numel(lengths);
+windows.totalDuration = sum(lengths);
+windows.declaredCount = declaredCount;
+end
+
+%% --- hvsa_evaluate_sesame.m (local function) --------------------
+function result = hvsa_evaluate_sesame(spectrum,windows)
+%HVSA_EVALUATE_SESAME SESAME (2004) V1-V9 from labelled Geopsy data.
+%   Original implementation based on the published quantitative conditions.
+%   No spectral processing, alternative peak recognition or geological
+%   plausibility interpretation is performed here.
+%
+%   In the accepted intermediate class, exactly one criterion group passes;
+%   that class is application-specific, not a SESAME acceptance category.
+
+if spectrum.nWindows ~= windows.count
+    error('HVSA:WindowMismatch','HV window count (%d) differs from LOG (%d).', ...
+          spectrum.nWindows,windows.count);
+end
+f0 = spectrum.f0;
+f = spectrum.freq;
+meanA = spectrum.meanHV;
+lo = spectrum.lowHV;
+hi = spectrum.highHV;
+A0 = spectrum.A0;
+
+% The plotted low/high curves delimit a multiplicative amplitude factor.
+variability = hi./meanA;
+if any(~isfinite(variability)) || any(variability<=0)
+    error('HVSA:InvalidVariability','Invalid H/V variability factor.');
+end
+
+% SESAME statistical frequency spread comes ONLY from window-peak statistics.
+sigmaF = spectrum.f0WindowMean - spectrum.f0WindowLower;
+[epsilonF,thetaA] = hvsa_thresholds(f0);
+
+mask = (f>0.5*f0 & f<2*f0);
+if ~any(mask)
+    % No evidence to establish the within-band stability criterion.
+    isStableAmplitude = false;
+else
+    if f0 >= 0.5
+        amplitudeLimit = 2;
+    else
+        amplitudeLimit = 3;
+    end
+    isStableAmplitude = all(variability(mask)<amplitudeLimit);
+end
+
+lowerSide = (f>=f0/4 & f<=f0);
+upperSide = (f>=f0 & f<=4*f0);
+peakLower = hvsa_global_peak(f,lo);
+peakUpper = hvsa_global_peak(f,hi);
+withinFivePercent = @(peakFrequency) abs(peakFrequency-f0)<=0.05*f0;
+
+% Geopsy peak estimate may not be at the absolute highest plotted sample.
+% V9 samples the multiplicative variability at the selected f0, not at a
+% different global maximum of the mean H/V curve.
+[~,selectedRow] = min(abs(f-f0));
+flags = [ ...
+    all(f0 > 10./windows.lengths), ...          % V1
+    f0 * windows.totalDuration > 200, ...      % V2
+    isStableAmplitude, ...                      % V3
+    any(meanA(lowerSide)<A0/2), ...            % V4
+    any(meanA(upperSide)<A0/2), ...            % V5
+    A0 > 2, ...                                 % V6
+    withinFivePercent(peakLower.frequency) && withinFivePercent(peakUpper.frequency), ... % V7
+    sigmaF < epsilonF, ...                      % V8
+    variability(selectedRow) < thetaA ...      % V9
+];
+crit = struct();
+for n = 1:9
+    crit.(sprintf('V%d',n)) = logical(flags(n));
+end
+crit.reliable = all(flags(1:3));
+crit.clear = nnz(flags(4:9)) >= 5;
+crit.controlled = xor(crit.reliable,crit.clear);
+crit.allPass = crit.reliable && crit.clear;
+
+result = struct();
+result.f0 = f0;
+result.T0 = 1/f0;
+result.A0 = A0;
+result.sf = sigmaF;          % Existing app and HSAP field, retained.
+result.sigma_f = sigmaF;
+result.f0WindowMean = spectrum.f0WindowMean;
+result.f0WindowLower = spectrum.f0WindowLower;
+result.f0WindowUpper = spectrum.f0WindowUpper;
+result.nc = f0 * windows.totalDuration;
+result.Iw = windows.lengths;
+result.tab = [f meanA lo hi variability];
+result.f0a = 1.05*f0;
+result.f0b = 0.95*f0;
+result.criteria = crit;
+result.criterionThresholds = struct('epsilon',epsilonF,'theta',thetaA);
+
+v7Audit = hvsa_v7_peak_review(f,lo,hi,f0);
+assert(v7Audit.originalGlobalPass == flags(7), ...
+       'HVSA:V7AuditMismatch', ...
+       'V7 diagnostic disagrees with baseline V7 calculation.');
+result.peakDiagnostics = struct('low',peakLower,'high',peakUpper, ...
+    'selection','Global maximum of each standard-deviation curve; first sample for ties', ...
+    'multiplePeakInterpretationPerformed',false, ...
+    'v7Audit',v7Audit, ...
+    'manualReviewRecommended',v7Audit.manualReviewRecommended, ...
+    'reviewReason',v7Audit.reviewReason);
+
+end
+
+%% --- hvsa_thresholds.m (local function) -------------------------
+function [epsilonF,thetaA] = hvsa_thresholds(f0)
+%HVSA_THRESHOLDS SESAME (2004), interpretation diagram Section 2.1.
+%   Lower boundaries included: [0.2, 0.5, 1.0, 2.0] Hz.
+validateattributes(f0,{'numeric'},{'scalar','finite','positive'});
+if f0 < 0.2
+    epsilonF = 0.25*f0; thetaA = 3.0;
+elseif f0 < 0.5
+    epsilonF = 0.20*f0; thetaA = 2.5;
+elseif f0 < 1.0
+    epsilonF = 0.15*f0; thetaA = 2.0;
+elseif f0 < 2.0
+    epsilonF = 0.10*f0; thetaA = 1.78;
+else
+    epsilonF = 0.05*f0; thetaA = 1.58;
+end
+end
+
+%% --- hvsa_global_peak.m (local function) ------------------------
+function peak = hvsa_global_peak(frequency,amplitude)
+%HVSA_GLOBAL_PEAK Deterministic maximum over the supplied spectral band.
+%   First of any equal-valued maxima is selected. This is NOT a physical
+%   identification of the fundamental resonance on a multi-peak curve.
+
+if numel(frequency)~=numel(amplitude) || isempty(frequency) || any(~isfinite(amplitude))
+    error('HVSA:BadPeakInput','Peak search requires finite matched vectors.');
+end
+[maxAmplitude,index] = max(amplitude);
+peak.index = index;
+peak.frequency = frequency(index);
+peak.amplitude = maxAmplitude;
+peak.numberOfEqualMaxima = nnz(amplitude==maxAmplitude);
+peak.hasTiedMaximum = peak.numberOfEqualMaxima>1;
+peak.isEndpoint = index==1 || index==numel(amplitude);
+end
+
+%% --- hvsa_v7_peak_review.m (local function) ---------------------
+function out = hvsa_v7_peak_review(freq,lowHV,highHV,f0)
+% READ-ONLY SCIENTIFIC DIAGNOSTIC. 
+% Does not smooth, resample, interpolate, extrapolate, or modify the input.
+% All peaks are selected at ORIGINAL measured frequency samples.
+%
+% V7 in SESAME (2004, section 3.3.1, criterion iv) requires the peaks
+% of the mean +/- one-SD curves to be within +/-5%% of selected Geopsy f0.
+% SESAME does NOT specify a unique algorithm for competing local peaks.
+%
+% Two explicit policies are compared:
+% (1) v1.1.3: absolute maximum in the entire supplied frequency band;
+%     ties -> earliest frequency sample; endpoint can be selected.
+% (2) Audit candidate: highest strictly INTERIOR local maximum of each
+%     original SD-envelope curve. Plateaus: middle sample (earlier middle
+%     for even-length plateau). Same-height alternatives: earliest sample.
+%     Boundary samples are not interior peaks.
+%
+% If candidate and baseline disagree, if global maximum is at a boundary,
+% if an interior peak cannot be identified, or if tie/plateau ambiguity
+% occurs, manual expert review is explicitly recommended. Candidate is NOT
+% automatically accepted into the application classification.
+%
+% NOT a geological identification of fundamental frequency or secondary peaks.
+
+f = freq(:); lo = lowHV(:); hi = highHV(:);
+if ~isnumeric(f0) || ~isscalar(f0) || ~isfinite(f0) || f0<=0 || ...
+        numel(f)<3 || numel(f)~=numel(lo) || numel(f)~=numel(hi) || ...
+        any(~isfinite([f;lo;hi])) || any(f<=0) || ...
+        any(diff(f)<=0) || any([lo;hi]<=0)
+    error('HVSA:V7InvalidInput','Invalid V7 frequency/amplitude vectors or f0.');
+end
+
+[gLoAmp,gLo] = max(lo); %#ok<ASGLU>
+[gHiAmp,gHi] = max(hi); %#ok<ASGLU>
+[loIdx,loWidths] = local_maxima_original_samples(lo);
+[hiIdx,hiWidths] = local_maxima_original_samples(hi);
+[pLo,wLo,tLo] = dominant_interior(lo,loIdx,loWidths);
+[pHi,wHi,tHi] = dominant_interior(hi,hiIdx,hiWidths);
+
+inside = @(x) isfinite(x) && abs(x-f0) <= 0.05*f0;
+baseline = inside(f(gLo)) && inside(f(gHi));
+if isfinite(pLo) && isfinite(pHi)
+    candidate = inside(f(pLo)) && inside(f(pHi));
+    candidateStatus = ternary(candidate,'PASS','FAIL');
+else
+    candidate = false;
+    candidateStatus = 'NO_INTERIOR_PEAK';
+end
+boundary = any([gLo,gHi]==1) || any([gLo,gHi]==numel(f));
+plateauOrTie = (wLo>1 || wHi>1 || tLo || tHi);
+changed = ~strcmp(candidateStatus,'NO_INTERIOR_PEAK') && (baseline~=candidate);
+reasons = {};
+if boundary, reasons{end+1} = 'GLOBAL_MAXIMUM_AT_BAND_EDGE'; end %#ok<AGROW>
+if strcmp(candidateStatus,'NO_INTERIOR_PEAK')
+    reasons{end+1} = 'NO_INTERIOR_LOCAL_MAXIMUM'; %#ok<AGROW>
+end
+if changed, reasons{end+1} = 'GLOBAL_INTERIOR_V7_CONFLICT'; end %#ok<AGROW>
+if plateauOrTie, reasons{end+1} = 'PLATEAU_OR_TIED_DOMINANT_LOCAL_MAXIMUM'; end %#ok<AGROW>
+if isempty(reasons), reasons = {'NONE'}; end
+
+out = struct();
+out.f0 = f0;
+out.v7LowerLimit = 0.95*f0;
+out.v7UpperLimit = 1.05*f0;
+out.originalGlobalLowFrequency = f(gLo);
+out.originalGlobalHighFrequency = f(gHi);
+out.originalGlobalPass = logical(baseline);
+out.highestInteriorLowFrequency = idx_or_nan(f,pLo);
+out.highestInteriorHighFrequency = idx_or_nan(f,pHi);
+out.highestInteriorDecision = candidateStatus;
+out.highestInteriorPassIfAssessable = candidate;
+out.interiorLowPeakCount = numel(loIdx);
+out.interiorHighPeakCount = numel(hiIdx);
+out.originalGlobalAtBandEdge = boundary;
+out.interiorDominantPlateauOrTie = plateauOrTie;
+out.globalInteriorVerdictConflict = changed;
+out.manualReviewRecommended = boundary || plateauOrTie || changed || ...
+    strcmp(candidateStatus,'NO_INTERIOR_PEAK');
+out.reviewReason = strjoin(reasons,';');
+out.selectionPolicy = ['Baseline: whole-band global maximum. ' ...
+    'Candidate: highest interior local maximum (no interpolation).'];
+out.sesameSelectionPrescribed = false;
+out.originalDataModified = false;
+end
+
+function [peaks,widths] = local_maxima_original_samples(a)
+% Strict interior local maxima; contiguous exact flat plateau is one peak.
+peaks = zeros(0,1); widths = zeros(0,1);
+n = numel(a); k = 2;
+while k<n
+    z = k;
+    while z<n && a(z+1)==a(k)
+        z=z+1;
+    end
+    if a(k)>a(k-1) && z<n && a(z)>a(z+1)
+        peaks(end+1,1) = floor((k+z)/2); %#ok<AGROW>
+        widths(end+1,1) = z-k+1; %#ok<AGROW>
+    end
+    k = max(k+1,z+1);
+end
+end
+
+function [p,w,hasTie] = dominant_interior(a,indices,widths)
+p=NaN; w=0; hasTie=false;
+if isempty(indices), return; end
+v=a(indices); maxv=max(v);
+selected=find(v==maxv);
+% local_maxima returns indices in ascending frequency order.
+p=indices(selected(1));
+w=widths(selected(1));
+hasTie=numel(selected)>1;
+end
+
+function x = idx_or_nan(v,i)
+if isfinite(i), x=v(i); else, x=NaN; end
+end
+
+function y = ternary(cond,onTrue,onFalse)
+if cond, y=onTrue; else, y=onFalse; end
+end
+
+%% --- hvsa_plot_spectrum.m (local function) ----------------------
+function hvsa_plot_spectrum(ax,result)
+%HVSA_PLOT_SPECTRUM Visual QA view with explicit peak/criterion annotations.
+%   Independently written plotting layer for HV-SESAME Analyzer. Marker
+%   shapes as well as colors differentiate the three project-level classes.
+
+if ~isgraphics(ax,'axes')
+    error('HVSA:InvalidAxes','A valid MATLAB axes handle is required.');
+end
+% A plain cla(ax) does not delete graphics whose HandleVisibility is 'off'.
+% In this plot, criterion guide lines and station markers use hidden handles
+% to keep the legend clean. Without allchild, these annotations persist when
+% navigating between stations and incorrectly look like extra HVSR peaks.
+% Delete *all* axes children while retaining axes placement/format settings.
+delete(allchild(ax));
+hold(ax,'off');
+f = result.tab(:,1);
+a = result.tab(:,2);
+lo = result.tab(:,3);
+hi = result.tab(:,4);
+peak = result.f0;
+amp = result.A0;
+colors = struct('mean',[0.12 0.24 0.34],'bounds',[0.45 0.51 0.60], ...
+                'guide',[0.41 0.53 0.71],'pass',[0.08 0.53 0.28], ...
+                'warn',[0.80 0.49 0.05],'fail',[0.73 0.19 0.22]);
+
+if result.criteria.allPass
+    status = 'ACCEPTED'; color = colors.pass; symbol = '^';
+elseif result.criteria.controlled
+    status = 'CONTROLLED ACCEPTANCE'; color = colors.warn; symbol = 's';
+else
+    status = 'REJECTED'; color = colors.fail; symbol = 'd';
+end
+
+hold(ax,'on');
+plot(ax,f,lo,'--','Color',colors.bounds,'LineWidth',0.9,'DisplayName','Mean - 1 SD');
+plot(ax,f,hi,'--','Color',colors.bounds,'LineWidth',0.9,'DisplayName','Mean + 1 SD');
+plot(ax,f,a,'-','Color',colors.mean,'LineWidth',1.8,'DisplayName','Mean H/V');
+
+vline(ax,peak,'-',colors.fail,1.2);
+vline(ax,0.95*peak,':',colors.guide,0.9);
+vline(ax,1.05*peak,':',colors.guide,0.9);
+vline(ax,peak/4,':',[0.18 0.48 0.38],0.8);
+vline(ax,4*peak,':',[0.18 0.48 0.38],0.8);
+plot(ax,[max(min(f),peak/4),min(max(f),4*peak)],[amp/2 amp/2],':', ...
+     'Color',colors.fail,'LineWidth',1.1,'HandleVisibility','off');
+
+idx = find(abs(f-peak)==min(abs(f-peak)),1,'first');
+plot(ax,f(idx),a(idx),symbol,'Color',color, ...
+    'MarkerFaceColor',color,'MarkerSize',9,'HandleVisibility','off');
+
+set(ax,'XScale','log','Color','white','XColor',[0.12 0.18 0.25], ...
+    'YColor',[0.12 0.18 0.25]);
+xlim(ax,[min(f) max(f)]);
+ylim(ax,[0,max(hi)*1.38]);
+grid(ax,'on'); box(ax,'on');
+xlabel(ax,'Frequency (Hz)'); ylabel(ax,'H/V amplitude');
+
+names = arrayfun(@(k)sprintf('V%d',k),1:9,'UniformOutput',false);
+pass = cellfun(@(name)result.criteria.(name),names);
+for k = 1:9
+    if pass(k)
+        thisColor = colors.pass; mark = 'PASS';
+    else
+        thisColor = colors.fail; mark = 'FAIL';
+    end
+    text(ax,0.02,0.71-0.068*(k-1),sprintf('V%d: %s',k,mark), ...
+        'Units','normalized','FontSize',13.5,'Color',thisColor, ...
+        'FontWeight','bold','Interpreter','none');
+end
+text(ax,0.02,0.97,sprintf('%s  |  f0 = %.4f Hz',status,peak), ...
+    'Units','normalized','VerticalAlignment','top', ...
+    'Color',color,'FontWeight','bold','FontSize',16,'Interpreter','none');
+text(ax,0.02,0.89,sprintf('Reliability: %s  |  Clear Peak: %s', ...
+    verdict(result.criteria.reliable),verdict(result.criteria.clear)), ...
+    'Units','normalized','Color',[0.14 0.18 0.23], ...
+    'FontWeight','bold','FontSize',13.5,'Interpreter','none');
+
+hold(ax,'off');
+end
+
+function vline(ax,x,style,color,width)
+if x>0
+    plot(ax,[x x],ylimSafe(ax),style,'Color',color, ...
+        'LineWidth',width,'HandleVisibility','off');
+end
+end
+
+function vals = ylimSafe(ax)
+vals = ylim(ax);
+if ~isfinite(vals(1)) || ~isfinite(vals(2)) || vals(1)==vals(2)
+    vals = [0 1];
+end
+end
+
+function str = verdict(flag)
+if flag
+    str = 'PASS';
+else
+    str = 'FAIL';
+end
 end
