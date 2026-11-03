@@ -133,6 +133,64 @@ end
 end
 
 %% ========================================================================
+function applyPublicationGUIFonts(fig,APP)
+% EXTRA-LARGE screenshot preset (publication Figure 3), display only.
+% The analysis engine, SESAME parameters, station classifications, source
+% spectral samples and output-generation functions remain unchanged.
+% Best viewed on a 1920x1080 or larger monitor with the main window maximized.
+
+try
+    set(fig,'WindowState','maximized');
+catch
+end
+
+% All fonts below are point sizes, not normalized scaling values.
+sections = findall(fig,'Type','uipanel');
+if ~isempty(sections)
+    set(sections,'FontUnits','points','FontSize',15,'FontWeight','bold');
+end
+
+controls = findall(fig,'Type','uicontrol');
+for ii=1:numel(controls)
+    type = lower(get(controls(ii),'Style'));
+    switch type
+        case 'text'
+            set(controls(ii),'FontUnits','points','FontSize',15);
+        case 'pushbutton'
+            set(controls(ii),'FontUnits','points','FontSize',15);
+        case 'edit'
+            set(controls(ii),'FontUnits','points','FontSize',15);
+        case 'listbox'
+            set(controls(ii),'FontUnits','points','FontSize',15);
+    end
+end
+
+% Special controls receive deliberate sizes to prevent clipping and keep
+% priority on the key SESAME results used for the published GUI screenshot.
+set([APP.critNameText(:);APP.critStatusText(:)],'FontSize',15,'FontWeight','bold');
+set(APP.critDescText(:),'FontSize',14);
+set([APP.txtAcceptedLabel APP.txtControlledLabel APP.txtRejectedLabel], ...
+    'FontSize',12.5,'FontWeight','bold');
+set([APP.txtAcceptedCount APP.txtControlledCount APP.txtRejectedCount], ...
+    'FontSize',22,'FontWeight','bold');
+set([APP.txtStationName APP.txtOverallStatus],'FontSize',15,'FontWeight','bold');
+set([APP.txtReliable APP.txtClear],'FontSize',13.5);
+set([APP.txtReliabilityProgress APP.txtClearProgress], 'FontSize',13.5);
+set([APP.txtReliabilityScore APP.txtClearScore], 'FontSize',12.5,'FontWeight','bold');
+set([APP.lblF0 APP.lblT0 APP.lblA0], 'FontSize',12.5);
+set([APP.valF0 APP.valT0 APP.valA0], 'FontSize',13.5);
+set(APP.txtStationHint,'FontSize',12.5);
+set(APP.btnAbout,'FontSize',13.5);
+
+% H/V plot tick labels and axis labels use explicit point sizes. Individual
+% plot annotations are assigned in hvsa_plot_spectrum.m.
+set(APP.ax,'FontUnits','points','FontSize',16);
+xlabel(APP.ax,'Frequency (Hz)','FontSize',16);
+ylabel(APP.ax,'H/V amplitude','FontSize',16);
+title(APP.ax,'Select a station from the list after analysis.','FontSize',16);
+end
+
+%% ========================================================================
 function APP = createMainGUI(APP)
 
 fig = figure('Name','HV-SESAME Analyzer V1', ...
@@ -153,31 +211,31 @@ APP.fig = fig;
 APP.pnlWorkflow = uipanel('Parent',fig, ...
     'Title','Workflow', ...
     'Units','normalized', ...
-    'Position',[0.015 0.905 0.965 0.08], ...
+    'Position',[0.015 0.852 0.965 0.133], ...
     'BackgroundColor',[0.96 0.97 0.98], ...
     'FontWeight','bold');
 
 APP.step1 = uipanel('Parent',APP.pnlWorkflow, ...
     'Title','1  Data Folder', ...
     'Units','normalized', ...
-    'Position',[0.010 0.12 0.165 0.76], ...
+    'Position',[0.010 0.10 0.165 0.82], ...
     'BackgroundColor',[0.93 0.96 1.00], ...
      'FontWeight','bold');
 
 APP.btnFolder = uicontrol('Parent',APP.step1,'Style','pushbutton', ...
-    'Units','normalized','Position',[0.08 0.25 0.84 0.55], ...
+    'Units','normalized','Position',[0.08 0.17 0.84 0.63], ...
     'String','Select Folder','FontWeight','bold', ...
     'Callback',@(~,~)cbOpenFolder());
 
 APP.step2 = uipanel('Parent',APP.pnlWorkflow, ...
     'Title','2  Coordinates', ...
     'Units','normalized', ...
-    'Position',[0.185 0.12 0.175 0.76], ...
+    'Position',[0.185 0.10 0.175 0.82], ...
     'BackgroundColor',[0.94 0.94 0.94], ...
      'FontWeight','bold');
 
 APP.btnCoords = uicontrol('Parent',APP.step2,'Style','pushbutton', ...
-    'Units','normalized','Position',[0.08 0.25 0.84 0.55], ...
+    'Units','normalized','Position',[0.08 0.17 0.84 0.63], ...
     'String','Select Coordinates','FontWeight','bold', ...
     'Enable','off', ...
     'Callback',@(~,~)cbOpenCoords());
@@ -185,12 +243,12 @@ APP.btnCoords = uicontrol('Parent',APP.step2,'Style','pushbutton', ...
 APP.step3 = uipanel('Parent',APP.pnlWorkflow, ...
     'Title','3  UTM Zone (WGS 84)', ...
     'Units','normalized', ...
-    'Position',[0.370 0.12 0.130 0.76], ...
+    'Position',[0.370 0.10 0.130 0.82], ...
     'BackgroundColor',[0.94 0.94 0.94], ...
      'FontWeight','bold');
 
 APP.edtZone = uicontrol('Parent',APP.step3,'Style','edit', ...
-    'Units','normalized','Position',[0.18 0.25 0.64 0.55], ...
+    'Units','normalized','Position',[0.18 0.17 0.64 0.63], ...
     'String',APP.utmZone, ...
     'BackgroundColor','white', ...
     'Enable','off');
@@ -198,12 +256,12 @@ APP.edtZone = uicontrol('Parent',APP.step3,'Style','edit', ...
 APP.step4 = uipanel('Parent',APP.pnlWorkflow, ...
     'Title','4  Analysis', ...
     'Units','normalized', ...
-    'Position',[0.510 0.12 0.130 0.76], ...
+    'Position',[0.510 0.10 0.130 0.82], ...
     'BackgroundColor',[0.94 0.94 0.94], ...
      'FontWeight','bold');
 
 APP.btnRun = uicontrol('Parent',APP.step4,'Style','pushbutton', ...
-    'Units','normalized','Position',[0.12 0.25 0.76 0.55], ...
+    'Units','normalized','Position',[0.12 0.17 0.76 0.63], ...
     'String','Run','FontWeight','bold', ...
     'BackgroundColor',[0.75 0.88 1.0], ...
     'Enable','off', ...
@@ -212,24 +270,24 @@ APP.btnRun = uicontrol('Parent',APP.step4,'Style','pushbutton', ...
 APP.step5 = uipanel('Parent',APP.pnlWorkflow, ...
     'Title','5  Outputs', ...
     'Units','normalized', ...
-    'Position',[0.650 0.12 0.170 0.76], ...
+    'Position',[0.650 0.10 0.170 0.82], ...
     'BackgroundColor',[0.94 0.94 0.94], ...
      'FontWeight','bold');
 
 APP.btnPDF = uicontrol('Parent',APP.step5,'Style','pushbutton', ...
-    'Units','normalized','Position',[0.03 0.25 0.43 0.55], ...
+    'Units','normalized','Position',[0.03 0.17 0.43 0.63], ...
     'String','PDF Report','FontWeight','bold', ...
     'Enable','off', ...
     'Callback',@(~,~)cbExportPDF());
 
 APP.btnKMZ = uicontrol('Parent',APP.step5,'Style','pushbutton', ...
-    'Units','normalized','Position',[0.49 0.25 0.21 0.55], ...
+    'Units','normalized','Position',[0.49 0.17 0.21 0.63], ...
     'String','KMZ','FontWeight','bold', ...
     'Enable','off', ...
     'Callback',@(~,~)cbExportKMZ());
 
 APP.btnGIS = uicontrol('Parent',APP.step5,'Style','pushbutton', ...
-    'Units','normalized','Position',[0.73 0.25 0.24 0.55], ...
+    'Units','normalized','Position',[0.73 0.17 0.24 0.63], ...
     'String','GIS','FontWeight','bold', ...
     'Enable','off', ...
     'Callback',@(~,~)cbExportGIS());
@@ -237,24 +295,24 @@ APP.btnGIS = uicontrol('Parent',APP.step5,'Style','pushbutton', ...
 APP.step6 = uipanel('Parent',APP.pnlWorkflow, ...
     'Title','6  Project', ...
     'Units','normalized', ...
-    'Position',[0.830 0.12 0.115 0.76], ...
+    'Position',[0.830 0.10 0.100 0.82], ...
     'BackgroundColor',[0.94 0.94 0.94], ...
      'FontWeight','bold');
 
 APP.btnLoadProject = uicontrol('Parent',APP.step6,'Style','pushbutton', ...
-    'Units','normalized','Position',[0.06 0.25 0.42 0.55], ...
+    'Units','normalized','Position',[0.06 0.17 0.42 0.63], ...
     'String','Load','FontWeight','bold', ...
     'Enable','on', ...
     'Callback',@(~,~)cbLoadProject());
 
 APP.btnSaveProject = uicontrol('Parent',APP.step6,'Style','pushbutton', ...
-    'Units','normalized','Position',[0.52 0.25 0.42 0.55], ...
+    'Units','normalized','Position',[0.52 0.17 0.42 0.63], ...
     'String','Save','FontWeight','bold', ...
     'Enable','off', ...
     'Callback',@(~,~)cbSaveProject());
 
 APP.btnAbout = uicontrol('Parent',APP.pnlWorkflow,'Style','pushbutton', ...
-    'Units','normalized','Position',[0.955 0.23 0.035 0.48], ...
+    'Units','normalized','Position',[0.935 0.23 0.055 0.48], ...
     'String','About/Help','FontWeight','bold', ...
     'Callback',@(~,~)cbAbout());
 
@@ -276,19 +334,19 @@ APP.txtStatus = uicontrol('Parent',APP.pnlLogger,'Style','edit', ...
 
 % -------------------- Left station panel --------------------
 APP.pnlLeft = uipanel('Parent',fig,'Title','Stations', ...
-    'Units','normalized','Position',[0.015 0.095 0.25 0.780], ...
+    'Units','normalized','Position',[0.015 0.095 0.245 0.740], ...
     'BackgroundColor',[0.96 0.97 0.98], ...
     'FontWeight','bold');
 
 % Station count cards
 APP.cardAccepted = uipanel('Parent',APP.pnlLeft, ...
     'Title','', ...
-    'Units','normalized','Position',[0.03 0.895 0.29 0.085], ...
+    'Units','normalized','Position',[0.03 0.865 0.29 0.115], ...
     'BackgroundColor',[0.90 0.98 0.92], ...
     'BorderType','line');
 
 APP.txtAcceptedCount = uicontrol('Parent',APP.cardAccepted,'Style','text', ...
-    'Units','normalized','Position',[0.05 0.45 0.90 0.45], ...
+    'Units','normalized','Position',[0.05 0.43 0.90 0.52], ...
     'String','0', ...
     'BackgroundColor',[0.90 0.98 0.92], ...
     'ForegroundColor',[0.00 0.35 0.10], ...
@@ -296,7 +354,7 @@ APP.txtAcceptedCount = uicontrol('Parent',APP.cardAccepted,'Style','text', ...
     'FontWeight','bold');
 
 APP.txtAcceptedLabel = uicontrol('Parent',APP.cardAccepted,'Style','text', ...
-    'Units','normalized','Position',[0.05 0.08 0.90 0.35], ...
+    'Units','normalized','Position',[0.05 0.07 0.90 0.30], ...
     'String','ACCEPTED', ...
     'BackgroundColor',[0.90 0.98 0.92], ...
     'ForegroundColor',[0.00 0.35 0.10], ...
@@ -305,12 +363,12 @@ APP.txtAcceptedLabel = uicontrol('Parent',APP.cardAccepted,'Style','text', ...
 
 APP.cardControlled = uipanel('Parent',APP.pnlLeft, ...
     'Title','', ...
-    'Units','normalized','Position',[0.355 0.895 0.29 0.085], ...
+    'Units','normalized','Position',[0.355 0.865 0.29 0.115], ...
     'BackgroundColor',[1.00 0.96 0.84], ...
     'BorderType','line');
 
 APP.txtControlledCount = uicontrol('Parent',APP.cardControlled,'Style','text', ...
-    'Units','normalized','Position',[0.05 0.45 0.90 0.45], ...
+    'Units','normalized','Position',[0.05 0.43 0.90 0.52], ...
     'String','0', ...
     'BackgroundColor',[1.00 0.96 0.84], ...
     'ForegroundColor',[0.65 0.38 0.00], ...
@@ -318,7 +376,7 @@ APP.txtControlledCount = uicontrol('Parent',APP.cardControlled,'Style','text', .
     'FontWeight','bold');
 
 APP.txtControlledLabel = uicontrol('Parent',APP.cardControlled,'Style','text', ...
-    'Units','normalized','Position',[0.05 0.08 0.90 0.35], ...
+    'Units','normalized','Position',[0.05 0.07 0.90 0.30], ...
     'String','CONTROLLED', ...
     'BackgroundColor',[1.00 0.96 0.84], ...
     'ForegroundColor',[0.65 0.38 0.00], ...
@@ -327,12 +385,12 @@ APP.txtControlledLabel = uicontrol('Parent',APP.cardControlled,'Style','text', .
 
 APP.cardRejected = uipanel('Parent',APP.pnlLeft, ...
     'Title','', ...
-    'Units','normalized','Position',[0.68 0.895 0.29 0.085], ...
+    'Units','normalized','Position',[0.68 0.865 0.29 0.115], ...
     'BackgroundColor',[1.00 0.90 0.90], ...
     'BorderType','line');
 
 APP.txtRejectedCount = uicontrol('Parent',APP.cardRejected,'Style','text', ...
-    'Units','normalized','Position',[0.05 0.45 0.90 0.45], ...
+    'Units','normalized','Position',[0.05 0.43 0.90 0.52], ...
     'String','0', ...
     'BackgroundColor',[1.00 0.90 0.90], ...
     'ForegroundColor',[0.60 0.00 0.00], ...
@@ -340,7 +398,7 @@ APP.txtRejectedCount = uicontrol('Parent',APP.cardRejected,'Style','text', ...
     'FontWeight','bold');
 
 APP.txtRejectedLabel = uicontrol('Parent',APP.cardRejected,'Style','text', ...
-    'Units','normalized','Position',[0.05 0.08 0.90 0.35], ...
+    'Units','normalized','Position',[0.05 0.07 0.90 0.30], ...
     'String','REJECTED', ...
     'BackgroundColor',[1.00 0.90 0.90], ...
     'ForegroundColor',[0.60 0.00 0.00], ...
@@ -348,7 +406,7 @@ APP.txtRejectedLabel = uicontrol('Parent',APP.cardRejected,'Style','text', ...
     'FontWeight','bold');
 
 APP.txtStationHint = uicontrol('Parent',APP.pnlLeft,'Style','text', ...
-    'Units','normalized','Position',[0.03 0.840 0.94 0.035], ...
+    'Units','normalized','Position',[0.03 0.810 0.94 0.045], ...
     'String','Select a station to inspect details', ...
     'BackgroundColor',[0.96 0.97 0.98], ...
     'ForegroundColor',[0.25 0.30 0.35], ...
@@ -356,7 +414,7 @@ APP.txtStationHint = uicontrol('Parent',APP.pnlLeft,'Style','text', ...
     'FontSize',8.5);
 
 APP.lstStations = uicontrol('Parent',APP.pnlLeft,'Style','listbox', ...
-    'Units','normalized','Position',[0.03 0.035 0.94 0.795], ...
+    'Units','normalized','Position',[0.03 0.035 0.94 0.765], ...
     'String',{'No analysis results yet'}, ...
     'BackgroundColor','white', ...
     'ForegroundColor',[0.10 0.10 0.10], ...
@@ -370,7 +428,7 @@ APP.tblStations = [];
 
 % -------------------- Center graph panel --------------------
 APP.pnlPlot = uipanel('Parent',fig,'Title','H/V Spectral Ratio', ...
-    'Units','normalized','Position',[0.28 0.095 0.47 0.780], ...
+    'Units','normalized','Position',[0.270 0.095 0.425 0.740], ...
     'BackgroundColor',[0.96 0.97 0.98], ... 
     'FontWeight','bold');
 
@@ -385,14 +443,14 @@ set(APP.ax,'XScale','log');
 
 % -------------------- Right criteria panel --------------------
 APP.pnlRight = uipanel('Parent',fig,'Title','Criteria and Summary', ...
-    'Units','normalized','Position',[0.765 0.095 0.215 0.780], ...
+    'Units','normalized','Position',[0.705 0.095 0.275 0.740], ...
     'BackgroundColor',[0.96 0.97 0.98], ...
     'FontWeight','bold');
 
 % Status card
 APP.pnlStationSummary = uipanel('Parent',APP.pnlRight, ...
     'Title','Station Summary', ...
-    'Units','normalized','Position',[0.04 0.785 0.92 0.185], ...
+    'Units','normalized','Position',[0.04 0.803 0.92 0.167], ...
     'BackgroundColor','white', ...
     'FontWeight','bold');
 
@@ -431,12 +489,12 @@ APP.txtClear = uicontrol('Parent',APP.pnlStationSummary,'Style','text', ...
 % Reliability and Clear Peak progress bars
 APP.pnlProgress = uipanel('Parent',APP.pnlRight, ...
     'Title','Evaluation Scores', ...
-    'Units','normalized','Position',[0.04 0.625 0.92 0.145], ...
+    'Units','normalized','Position',[0.04 0.603 0.92 0.188], ...
     'BackgroundColor','white', ...
     'FontWeight','bold');
 
 APP.txtReliabilityProgress = uicontrol('Parent',APP.pnlProgress,'Style','text', ...
-    'Units','normalized','Position',[0.05 0.62 0.62 0.22], ...
+    'Units','normalized','Position',[0.05 0.73 0.60 0.18], ...
     'String','Reliability (V1-V3)', ...
     'BackgroundColor','white', ...
     'HorizontalAlignment','left', ...
@@ -444,7 +502,7 @@ APP.txtReliabilityProgress = uicontrol('Parent',APP.pnlProgress,'Style','text', 
     'FontWeight','bold');
 
 APP.txtReliabilityScore = uicontrol('Parent',APP.pnlProgress,'Style','text', ...
-    'Units','normalized','Position',[0.70 0.62 0.25 0.22], ...
+    'Units','normalized','Position',[0.65 0.73 0.30 0.18], ...
     'String','0/3', ...
     'BackgroundColor','white', ...
     'HorizontalAlignment','right', ...
@@ -452,11 +510,11 @@ APP.txtReliabilityScore = uicontrol('Parent',APP.pnlProgress,'Style','text', ...
     'FontWeight','bold');
 
 APP.axReliabilityBar = axes('Parent',APP.pnlProgress, ...
-    'Units','normalized','Position',[0.05 0.50 0.90 0.10]);
+    'Units','normalized','Position',[0.05 0.49 0.90 0.22]);
 axis(APP.axReliabilityBar,'off');
 
 APP.txtClearProgress = uicontrol('Parent',APP.pnlProgress,'Style','text', ...
-    'Units','normalized','Position',[0.05 0.20 0.62 0.22], ...
+    'Units','normalized','Position',[0.05 0.27 0.60 0.18], ...
     'String','Clear Peak (V4-V9)', ...
     'BackgroundColor','white', ...
     'HorizontalAlignment','left', ...
@@ -464,7 +522,7 @@ APP.txtClearProgress = uicontrol('Parent',APP.pnlProgress,'Style','text', ...
     'FontWeight','bold');
 
 APP.txtClearScore = uicontrol('Parent',APP.pnlProgress,'Style','text', ...
-    'Units','normalized','Position',[0.70 0.20 0.25 0.22], ...
+    'Units','normalized','Position',[0.65 0.27 0.30 0.18], ...
     'String','0/6', ...
     'BackgroundColor','white', ...
     'HorizontalAlignment','right', ...
@@ -472,13 +530,13 @@ APP.txtClearScore = uicontrol('Parent',APP.pnlProgress,'Style','text', ...
     'FontWeight','bold');
 
 APP.axClearBar = axes('Parent',APP.pnlProgress, ...
-    'Units','normalized','Position',[0.05 0.08 0.90 0.10]);
+    'Units','normalized','Position',[0.05 0.035 0.90 0.22]);
 axis(APP.axClearBar,'off');
 
 % Parameter cards
 APP.pnlParamCards = uipanel('Parent',APP.pnlRight, ...
     'Title','Peak Parameters', ...
-    'Units','normalized','Position',[0.04 0.515 0.92 0.095], ...
+    'Units','normalized','Position',[0.04 0.477 0.92 0.114], ...
     'BackgroundColor','white', ...
     'FontWeight','bold');
 
@@ -558,7 +616,7 @@ APP.valA0 = uicontrol('Parent',APP.cardA0,'Style','text', ...
 % Criteria list without grid lines
 APP.pnlCriteriaList = uipanel('Parent',APP.pnlRight, ...
     'Title','SESAME Criteria', ...
-    'Units','normalized','Position',[0.04 0.04 0.92 0.455], ...
+    'Units','normalized','Position',[0.04 0.030 0.92 0.435], ...
     'BackgroundColor','white', ...
     'FontWeight','bold');
 
@@ -594,6 +652,9 @@ for kk = 1:9
 end
 
 applyLightThemeToFigure(fig);
+
+% Publication screenshot preset: GUI fonts only (no SESAME calculations).
+applyPublicationGUIFonts(fig,APP);
 
 guidata(fig,APP);
 
@@ -1050,13 +1111,13 @@ critNames = {'V1','V2','V3','V4','V5','V6','V7','V8','V9'};
 critDesc  = { ...
     'f0 > 10/Iw', ...
     'nc(f0) > 200', ...
-    's sigma', ...
+    'amplitude stability', ...
     'clear low', ...
     'clear high', ...
     'A0 > 2', ...
-    'max f0 band', ...
-    'sf < ef0', ...
-    'sigma limit'};
+    'peak within f0 +/- 5%', ...
+    'sigma_f < epsilon(f0)', ...
+    'sigma_A(f0) < theta(f0)'};
 
 critFlags = [crit.V1 crit.V2 crit.V3 crit.V4 crit.V5 crit.V6 crit.V7 crit.V8 crit.V9];
 
@@ -1085,8 +1146,8 @@ set(APP.valA0,'String',sprintf('%.3f',res.A0));
 reliabilityScore = sum([crit.V1 crit.V2 crit.V3]);
 clearScore = sum([crit.V4 crit.V5 crit.V6 crit.V7 crit.V8 crit.V9]);
 
-set(APP.txtReliabilityScore,'String',sprintf('%d / 3',reliabilityScore));
-set(APP.txtClearScore,'String',sprintf('%d / 6',clearScore));
+set(APP.txtReliabilityScore,'String',sprintf('%d / 3 (%.0f%%)',reliabilityScore,100*reliabilityScore/3));
+set(APP.txtClearScore,'String',sprintf('%d / 6 (%.0f%%)',clearScore,100*clearScore/6));
 
 drawProgressBar(APP.axReliabilityBar, reliabilityScore/3, [0.20 0.70 0.30]);
 drawProgressBar(APP.axClearBar, clearScore/6, [0.95 0.70 0.05]);
@@ -1122,11 +1183,11 @@ axis(ax,'off');
 xlim(ax,[0 1]);
 ylim(ax,[0 1]);
 
-rectangle(ax,'Position',[0 0.20 1 0.60], ...
+rectangle(ax,'Position',[0 0.08 1 0.84], ...
     'FaceColor',[0.88 0.90 0.92], ...
     'EdgeColor',[0.75 0.78 0.82]);
 
-rectangle(ax,'Position',[0 0.20 frac 0.60], ...
+rectangle(ax,'Position',[0 0.08 frac 0.84], ...
     'FaceColor',barColor, ...
     'EdgeColor','none');
 
@@ -1134,269 +1195,29 @@ text(ax,0.50,0.50,sprintf('%.0f%%',frac*100), ...
     'HorizontalAlignment','center', ...
     'VerticalAlignment','middle', ...
     'FontWeight','bold', ...
-    'FontSize',8, ...
+    'FontSize',14, ...
+    'BackgroundColor',[1 1 1], ...
+    'Margin',1, ...
     'Color',[0.05 0.05 0.05]);
 
 end
 
 %% ========================================================================
 function result = runSesameCheck(noise, logFile)
-
-nw = dlmread(noise,' ',[1 5 1 5]);
-
-fid_diff = fopen(logFile);
-if fid_diff < 0
-    error('LOG file could not be opened: %s',logFile);
-end
-
-ii = 0;
-indice = [];
-
-while ~feof(fid_diff)
-    ii = ii + 1;
-    tline_diff = fgetl(fid_diff);
-    if ischar(tline_diff)
-        aa_diff = strfind(tline_diff,'# Start time');
-        if ~isempty(aa_diff) && aa_diff(1)==1
-            indice = ii;
-        end
-    end
-end
-fclose(fid_diff);
-
-if isempty(indice)
-    error('"# Start time" line was not found in the LOG file.');
-end
-
-Iw = dlmread(logFile,'\t',[indice 2 indice+nw-1 2]);
-
-f0 = dlmread(noise,'\t',[2 1 2 1]);
-A0 = dlmread(noise,'\t',[5 1 5 1]);
-f1 = dlmread(noise,'\t',[4 2 4 2]);
-sf = f0 - f1;
-nc = Iw * nw * f0;
-
-% Locate the numeric H/V table automatically for compatibility
-% with different Geopsy .hv header formats.
-fid_hv = fopen(noise,'r');
-if fid_hv < 0
-    error('HV file could not be opened: %s',noise);
-end
-
-hvHeaderLine = [];
-hvLineNo = 0;
-
-while ~feof(fid_hv)
-    hvLineNo = hvLineNo + 1;
-    hvLine = fgetl(fid_hv);
-
-    if ischar(hvLine) && startsWith(strtrim(hvLine),'# Frequency')
-        hvHeaderLine = hvLineNo;
-        break;
-    end
-end
-fclose(fid_hv);
-
-if isempty(hvHeaderLine)
-    error('"# Frequency" table header was not found in the HV file.');
-end
-
-% dlmread uses zero-based row indexing; therefore hvHeaderLine
-% starts reading from the line immediately after the detected header.
-tab = dlmread(noise,'\t',hvHeaderLine,0);
-
-si = size(tab);
-for i = 1:si(1)
-    tab(i,5) = tab(i,4) ./ tab(i,2);
-end
-
-f0a = f0 + 0.05*f0;
-f0b = f0 - 0.05*f0;
-
-crit = struct();
-
-crit.V1 = all(f0 > 10./Iw);
-crit.V2 = all(nc > 200);
-
-flag_s = 0;
-if f0 >= 0.5
-    for j = 1:si(1)
-        if tab(j,1)>0.5*f0 && tab(j,1)<2*f0 && tab(j,5)>2
-            flag_s = 1;
-        end
-    end
-else
-    for j = 1:si(1)
-        if tab(j,1)>0.5*f0 && tab(j,1)<2*f0 && tab(j,5)>3
-            flag_s = 1;
-        end
-    end
-end
-crit.V3 = (flag_s == 0);
-
-flag4 = 0;
-for j = 1:si(1)
-    if tab(j,1)>f0/4 && tab(j,1)<f0 && tab(j,2)<A0/2
-        flag4 = 1;
-    end
-end
-crit.V4 = (flag4 == 1);
-
-flag5 = 0;
-for j = 1:si(1)
-    if tab(j,1)>f0 && tab(j,1)<4*f0 && tab(j,2)<A0/2
-        flag5 = 1;
-    end
-end
-crit.V5 = (flag5 == 1);
-
-crit.V6 = (A0 > 2);
-
-[~,I] = max(tab);
-crit.V7 = (tab(I(3),1)>f0b && tab(I(3),1)<f0a && ...
-           tab(I(4),1)>f0b && tab(I(4),1)<f0a);
-
-if f0 < 0.2
-    ef0 = 0.25*f0;
-elseif f0 < 0.5
-    ef0 = 0.20*f0;
-elseif f0 < 1.0
-    ef0 = 0.15*f0;
-elseif f0 < 2.0
-    ef0 = 0.10*f0;
-else
-    ef0 = 0.05*f0;
-end
-crit.V8 = (sf < ef0);
-
-if f0 < 0.2
-    tetaf0 = 3.0;
-elseif f0 < 0.5
-    tetaf0 = 2.5;
-elseif f0 < 1.0
-    tetaf0 = 2.0;
-elseif f0 < 2.0
-    tetaf0 = 1.78;
-else
-    tetaf0 = 1.58;
-end
-crit.V9 = (tab(I(2),5)<tetaf0);
-
-crit.reliable   = all([crit.V1 crit.V2 crit.V3]);
-crit.clear      = sum([crit.V4 crit.V5 crit.V6 crit.V7 crit.V8 crit.V9]) >= 5;
-crit.controlled = xor(crit.reliable, crit.clear);
-crit.allPass    = crit.reliable && crit.clear;
-
-result = struct();
-result.f0 = f0;
-result.T0 = 1./f0;
-result.A0 = A0;
-result.sf = sf;
-result.nc = nc;
-result.Iw = Iw;
-result.tab = tab;
-result.f0a = f0a;
-result.f0b = f0b;
-result.criteria = crit;
-
+% Modular SESAME assessment from documented, labelled Geopsy fields.
+% New parser/evaluator sources are required alongside this GUI .m file.
+spectrum = hvsa_parse_hv(noise);
+windows = hvsa_parse_log(logFile);
+result = hvsa_evaluate_sesame(spectrum,windows);
 end
 
 %% ========================================================================
 function plotHVwithCriteria(res,ax)
-
+% Delegate plotting to an independently organized visualization module.
 if nargin < 2
     ax = gca;
 end
-
-axes(ax); %#ok<LAXES>
-cla(ax);
-
-set(ax,'Color','white','XColor','black','YColor','black','GridColor',[0.70 0.70 0.70],'MinorGridColor',[0.85 0.85 0.85]);
-figH = ancestor(ax,'figure');
-if ~isempty(figH)
-    set(figH,'Color',[0.96 0.97 0.98],'InvertHardcopy','off');
-end
-
-tab = res.tab;
-f0 = res.f0;
-A0 = res.A0;
-f0a = res.f0a;
-f0b = res.f0b;
-crit = res.criteria;
-
-hold(ax,'on');
-
-vet = [0 max(tab(:,4))+1];
-
-plot(ax,tab(:,1),tab(:,2),'k','LineWidth',1.2);
-plot(ax,tab(:,1),tab(:,3),':k','LineWidth',1);
-plot(ax,tab(:,1),tab(:,4),':k','LineWidth',1);
-
-plot(ax,[f0 f0],vet,'r','LineWidth',1.2);
-plot(ax,[f0a f0a],vet,':b','LineWidth',1);
-plot(ax,[f0b f0b],vet,':b','LineWidth',1);
-plot(ax,[f0/4 f0/4],vet,':g','LineWidth',1);
-plot(ax,[f0*4 f0*4],vet,':g','LineWidth',1);
-plot(ax,[f0/4 f0*4],[A0/2 A0/2],':r','LineWidth',1);
-
-set(ax,'XScale','log');
-grid(ax,'on');
-box(ax,'on');
-xlabel(ax,'Frequency [Hz]');
-ylabel(ax,'Amplitude H/V');
-
-ymax = max(tab(:,4)) + 1;
-ylim(ax,[0 ymax*1.35]);
-
-xIcon = tab(1,1);
-yIcon = ymax*1.22;
-
-if crit.allPass
-    markerColor = [0 0.65 0];
-    statusText = ' ACCEPTED';
-elseif crit.controlled
-    markerColor = [0.95 0.65 0];
-    statusText = ' CONTROLLED ACCEPTANCE';
-else
-    markerColor = [0.85 0 0];
-    statusText = ' REJECTED';
-end
-
-plot(ax,xIcon,yIcon,'o','MarkerSize',14, ...
-    'MarkerEdgeColor',markerColor,'MarkerFaceColor',markerColor);
-
-text(ax,xIcon*1.05,yIcon,statusText, ...
-    'Color',markerColor,'FontWeight','bold','FontSize',10, ...
-    'VerticalAlignment','middle','Interpreter','none');
-
-text(ax,xIcon*1.05,ymax*1.10, ...
-    sprintf('Reliable: %s | Clear: %s', yesno(crit.reliable), yesno(crit.clear)), ...
-    'Color',[0.1 0.1 0.1], ...
-    'FontWeight','bold','FontSize',9,'Interpreter','none');
-
-critNames = {'V1','V2','V3','V4','V5','V6','V7','V8','V9'};
-critFlags = [crit.V1 crit.V2 crit.V3 crit.V4 crit.V5 crit.V6 crit.V7 crit.V8 crit.V9];
-
-xText = tab(1,1)*1.05;
-yStart = ymax*0.98;
-dy = ymax*0.075;
-
-for k = 1:9
-    thisY = yStart - (k-1)*dy;
-    if critFlags(k)
-        col = [0 0.6 0];
-        label = 'OK';
-    else
-        col = [0.8 0 0];
-        label = 'NO';
-    end
-    text(ax,xText,thisY,sprintf('%s: %s',critNames{k},label), ...
-        'Color',col,'FontSize',8,'FontWeight','bold', ...
-        'HorizontalAlignment','left','Interpreter','none');
-end
-
-hold(ax,'off');
-
+hvsa_plot_spectrum(ax,res);
 end
 
 %% ========================================================================
@@ -1565,8 +1386,18 @@ for i = 1:height(T)
     ClrClass(i) = scoreClass(ClrPct(i));
 end
 
+% Keep criterion-level provenance in both CSV and shapefile attributes.
+% Numeric 1 means PASS, numeric 0 means FAIL. All nine fields are exported.
+criterionNames = arrayfun(@(k)sprintf('V%d',k),1:9,'UniformOutput',false);
+criterionFlags = zeros(height(T),9);
+for k = 1:9
+    criterionFlags(:,k) = double(T.(criterionNames{k}));
+end
+
 gisTable = table(T.Name, Status, T.f0, T.T0, T.A0, RelPct, ClrPct, RelClass, ClrClass, T.X, T.Y, T.Z, ...
     'VariableNames',{'Name','Status','f0_Hz','T0_s','A0','RelPct','ClrPct','RelClass','ClrClass','X_UTM','Y_UTM','Z'});
+criterionTable = array2table(criterionFlags,'VariableNames',criterionNames);
+gisTable = [gisTable criterionTable];
 
 writetable(gisTable,[baseName '.csv']);
 
@@ -1598,6 +1429,9 @@ try
         S(i).X_UTM = T.X(i);
         S(i).Y_UTM = T.Y(i);
         S(i).Z = T.Z(i);
+        for k = 1:9
+            S(i).(criterionNames{k}) = criterionFlags(i,k);
+        end
     end
     shapewrite(S,[baseName '.shp']);
 catch
@@ -1704,7 +1538,16 @@ fields = { ...
     'ClrClass','C',10,0; ...
     'X_UTM','N',14,3; ...
     'Y_UTM','N',14,3; ...
-    'Z','N',10,3};
+    'Z','N',10,3; ...
+    'V1','N',1,0; ...
+    'V2','N',1,0; ...
+    'V3','N',1,0; ...
+    'V4','N',1,0; ...
+    'V5','N',1,0; ...
+    'V6','N',1,0; ...
+    'V7','N',1,0; ...
+    'V8','N',1,0; ...
+    'V9','N',1,0};
 
 nRec = height(T);
 nFields = size(fields,1);
@@ -1759,7 +1602,9 @@ for r = 1:nRec
         char(T.ClrClass(r)), ...
         T.X_UTM(r), ...
         T.Y_UTM(r), ...
-        T.Z(r)};
+        T.Z(r), ...
+        T.V1(r), T.V2(r), T.V3(r), T.V4(r), T.V5(r), ...
+        T.V6(r), T.V7(r), T.V8(r), T.V9(r)};
 
     for f = 1:nFields
         typ = char(fields{f,2});
@@ -1878,6 +1723,11 @@ fprintf(fid,'  ClrClass  : Clear Peak class\n');
 fprintf(fid,'  X_UTM     : UTM Easting\n');
 fprintf(fid,'  Y_UTM     : UTM Northing\n');
 fprintf(fid,'  Z         : Elevation\n');
+fprintf(fid,'  V1-V9     : Individual SESAME criterion results (1=PASS, 0=FAIL)\n');
+fprintf(fid,'              Values are numeric in both CSV and Shapefile DBF.\n');
+fprintf(fid,'              Criterion codes represent the nine checks in SESAME (2004).\n');
+fprintf(fid,'  Note      : Display maps use relative, shifted UTM distances.\n');
+fprintf(fid,'              CSV and Shapefile retain the input UTM coordinates.\n');
 
 fclose(fid);
 
@@ -2179,11 +2029,10 @@ end
 %% ========================================================================
 function createPDFReportCompat(finalTable, allResults, outPdf)
 forceLightTheme();
-% Optimized PDF report generator.
-% V7.1:
-%   - Adds export progress dialog.
-%   - Downloads Esri satellite image only once and reuses it for all project map pages.
-%   - Keeps the workflow responsive with drawnow updates.
+% PDF report generator with transparent, basemap-free project maps.
+% - Station coordinates are displayed as relative UTM distances in kilometres.
+% - Shapes as well as colours convey quality categories.
+% - Original GIS coordinate values are not modified.
 
 [outDir,outName,~] = fileparts(outPdf);
 tempDir = fullfile(outDir,[outName '_pdf_pages']);
@@ -2198,8 +2047,8 @@ pageNo = 0;
 
 rowsPerPage = 18;
 numTablePages = ceil(height(finalTable)/rowsPerPage);
-totalSteps = 1 + 1 + 3 + numTablePages + 1 + 1; 
-% satellite cache + summary + 3 maps + table pages + criteria statistics + merge
+totalSteps = 1 + 3 + numTablePages + 1 + 1;
+% summary + 3 maps + table pages + criteria statistics + merge
 % Station-level H/V plots are intentionally omitted from PDF for speed/readability.
 
 progressFig = createExportProgressDialog(totalSteps);
@@ -2212,9 +2061,7 @@ stepCounter = 0;
         updateExportProgress(progressFig,stepCounter,totalSteps,msg);
     end
 
-% Satellite background cache, downloaded once only
-updateProgress('Downloading project satellite background, if available...');
-satCache = getEsriProjectSatellite(finalTable);
+% No online map service is accessed during report creation.
 
 % Cover/Summary
 updateProgress('Creating summary page...');
@@ -2226,19 +2073,19 @@ close(fig);
 % Project map pages
 updateProgress('Creating overall classification map...');
 pageNo = pageNo + 1;
-fig = makeProjectMapFigure(finalTable,'overall',satCache);
+fig = makeProjectMapFigure(finalTable,'overall');
 pageFiles{end+1} = printPage(fig,tempDir,pageNo); %#ok<AGROW>
 close(fig);
 
 updateProgress('Creating reliability score map...');
 pageNo = pageNo + 1;
-fig = makeProjectMapFigure(finalTable,'reliability',satCache);
+fig = makeProjectMapFigure(finalTable,'reliability');
 pageFiles{end+1} = printPage(fig,tempDir,pageNo); %#ok<AGROW>
 close(fig);
 
 updateProgress('Creating clear peak score map...');
 pageNo = pageNo + 1;
-fig = makeProjectMapFigure(finalTable,'clear',satCache);
+fig = makeProjectMapFigure(finalTable,'clear');
 pageFiles{end+1} = printPage(fig,tempDir,pageNo); %#ok<AGROW>
 close(fig);
 
@@ -2498,16 +2345,17 @@ text(ax,0.955,0.035,sprintf('Generated: %s',datestr(now,'dd.mm.yyyy HH:MM')), ..
 
 end
 
-function fig = makeProjectMapFigure(finalTable,mapType,satCache)
-% Project map page for PDF export.
-% V7.0: Uses Esri World Imagery as project-wide satellite background when online.
-% mapType: 'overall', 'reliability', or 'clear'
+function fig = makeProjectMapFigure(finalTable,mapType)
+% Basemap-free relative-coordinate project map.
+% The input UTM coordinates may be shifted for publication/privacy.
+% To avoid a misleading geographical background, show relative spacing only.
 
 fig = figure('Visible','off','Units','pixels','Position',[100 100 1500 850], ...
     'Color',[0.96 0.97 0.98],'InvertHardcopy','off');
 
-ax0 = axes(fig,'Position',[0 0 1 1]);
+ax0 = axes('Parent',fig,'Position',[0 0 1 1]);
 axis(ax0,'off'); xlim(ax0,[0 1]); ylim(ax0,[0 1]);
+hold(ax0,'on'); % Prevent legend symbols from clearing earlier page elements.
 
 switch lower(mapType)
     case 'overall'
@@ -2519,110 +2367,87 @@ switch lower(mapType)
     case 'clear'
         titleStr = 'Clear Peak Score Map';
         subtitleStr = 'Score based on V4-V9 criteria';
+    otherwise
+        error('Unknown map type: %s',mapType);
 end
 
 rectangle(ax0,'Position',[0.025 0.875 0.95 0.085], ...
     'FaceColor','white','EdgeColor',[0.82 0.86 0.90]);
 text(ax0,0.045,0.935,titleStr,'FontSize',18,'FontWeight','bold', ...
     'Color',[0.05 0.16 0.28],'VerticalAlignment','middle');
-text(ax0,0.045,0.900,[subtitleStr '  |  Esri World Imagery background when online'], ...
-    'FontSize',10,'Color',[0.30 0.35 0.40], ...
-    'VerticalAlignment','middle');
+text(ax0,0.045,0.900,[subtitleStr '  |  Relative station coordinates (no geographic basemap)'], ...
+    'FontSize',10,'Color',[0.30 0.35 0.40],'VerticalAlignment','middle');
 
 rectangle(ax0,'Position',[0.045 0.100 0.680 0.760], ...
     'FaceColor','white','EdgeColor',[0.82 0.86 0.90]);
+mapAx = axes('Parent',fig,'Position',[0.095 0.185 0.580 0.600]);
+hold(mapAx,'on'); box(mapAx,'on'); grid(mapAx,'on');
+set(mapAx,'Color',[1 1 1],'XColor',[0.20 0.25 0.30], ...
+    'YColor',[0.20 0.25 0.30],'GridColor',[0.86 0.89 0.92], ...
+    'GridAlpha',0.45,'FontSize',10);
 
-mapAx = axes('Parent',fig,'Position',[0.095 0.165 0.580 0.625]);
-hold(mapAx,'on'); grid(mapAx,'on'); box(mapAx,'on');
-
-validLL = ~isnan(finalTable.Lon) & ~isnan(finalTable.Lat);
-validXY = ~isnan(finalTable.X) & ~isnan(finalTable.Y);
-
-satOK = false;
-satNote = 'Satellite background unavailable';
-
-if any(validLL)
-    if nargin < 3 || isempty(satCache)
-        satCache = getEsriProjectSatellite(finalTable);
-    end
-
-    satImg = satCache.img;
-    lonLim = satCache.lonLim;
-    latLim = satCache.latLim;
-    satOK  = satCache.ok;
-    satNote = satCache.note;
-
-    if satOK
-        image(mapAx,'XData',lonLim,'YData',[latLim(2) latLim(1)],'CData',satImg);
-        set(mapAx,'YDir','normal');
-        xlim(mapAx,lonLim);
-        ylim(mapAx,latLim);
-        xlabel(mapAx,'Longitude');
-        ylabel(mapAx,'Latitude');
-        plotProjectPointsOnMap(mapAx,finalTable,mapType,'lonlat',lonLim,latLim);
-    else
-        X = finalTable.Lon(validLL);
-        Y = finalTable.Lat(validLL);
-        setupMapLimits(mapAx,X,Y,'Longitude','Latitude');
-        plotProjectPointsOnMap(mapAx,finalTable,mapType,'lonlat',xlim(mapAx),ylim(mapAx));
-    end
-elseif any(validXY)
-    X = finalTable.X(validXY);
-    Y = finalTable.Y(validXY);
-    setupMapLimits(mapAx,X,Y,'UTM X (m)','UTM Y (m)');
-    plotProjectPointsOnMap(mapAx,finalTable,mapType,'utm',xlim(mapAx),ylim(mapAx));
+validXY = isfinite(finalTable.X) & isfinite(finalTable.Y);
+if any(validXY)
+    % The subtraction affects only figure display, NEVER saved GIS coordinates.
+    referenceX = min(finalTable.X(validXY));
+    referenceY = min(finalTable.Y(validXY));
+    xDisplay = (finalTable.X-referenceX)/1000;
+    yDisplay = (finalTable.Y-referenceY)/1000;
+    setupMapLimits(mapAx,xDisplay(validXY),yDisplay(validXY), ...
+        'Relative easting (km)','Relative northing (km)');
+    axis(mapAx,'equal'); % Keep distance scaling the same on both map axes.
+    plotProjectPointsOnMap(mapAx,finalTable,mapType,xDisplay,yDisplay);
+elseif any(isfinite(finalTable.Lon) & isfinite(finalTable.Lat))
+    validLL = isfinite(finalTable.Lon) & isfinite(finalTable.Lat);
+    xDisplay = finalTable.Lon;
+    yDisplay = finalTable.Lat;
+    setupMapLimits(mapAx,xDisplay(validLL),yDisplay(validLL),'Longitude','Latitude');
+    plotProjectPointsOnMap(mapAx,finalTable,mapType,xDisplay,yDisplay);
 else
-    text(mapAx,0.5,0.5,'No coordinate data available.','HorizontalAlignment','center');
+    text(mapAx,0.5,0.5,'No coordinate data available.', ...
+        'Units','normalized','HorizontalAlignment','center');
 end
 
-title(mapAx,titleStr);
-mapAx.Color = 'white'; mapAx.XColor = 'black'; mapAx.YColor = 'black';
-
-if satOK
-    addNorthArrow(ax0,0.682,0.805);
-    text(ax0,0.095,0.125,'Background: Esri World Imagery', ...
-        'FontSize',8,'Color',[0.35 0.35 0.35]);
-else
-    text(ax0,0.095,0.125,satNote, ...
-        'FontSize',8,'Color',[0.55 0.20 0.20]);
-end
+title(mapAx,'Station distribution (schematic, no topography)', ...
+    'FontSize',11,'FontWeight','bold');
+text(ax0,0.095,0.125,'Map shows station separation only; no topography or site conditions implied.', ...
+    'FontSize',8.5,'Color',[0.30 0.34 0.38]);
 
 rectangle(ax0,'Position',[0.755 0.100 0.220 0.760], ...
     'FaceColor','white','EdgeColor',[0.82 0.86 0.90]);
-text(ax0,0.775,0.820,'Legend','FontSize',14,'FontWeight','bold','Color',[0.05 0.16 0.28]);
+text(ax0,0.775,0.820,'Legend','FontSize',14,'FontWeight','bold', ...
+    'Color',[0.05 0.16 0.28]);
 
-switch lower(mapType)
-    case 'overall'
-        legendRows = { ...
-            [0.00 0.62 0.20], 'Accepted'; ...
-            [0.95 0.66 0.00], 'Controlled Acceptance'; ...
-            [0.80 0.05 0.05], 'Rejected'};
-    otherwise
-        legendRows = { ...
-            [0.00 0.62 0.20], '100%'; ...
-            [0.95 0.78 0.00], '80-99%'; ...
-            [0.95 0.45 0.00], '50-79%'; ...
-            [0.80 0.05 0.05], '<50%'};
+if strcmpi(mapType,'overall')
+    legendColors = {[0.00 0.48 0.23],[0.93 0.62 0.02],[0.75 0.08 0.12]};
+    legendLabels = {'Accepted','Controlled Acceptance','Rejected'};
+    legendMarkers = {'o','s','^'};
+else
+    legendColors = {[0.00 0.48 0.23],[0.92 0.75 0.05], ...
+                    [0.90 0.44 0.05],[0.75 0.08 0.12]};
+    legendLabels = {'100%','80-99%','50-79%','<50%'};
+    legendMarkers = {'o','d','s','^'};
 end
 
-for k = 1:size(legendRows,1)
-    yy = 0.765 - (k-1)*0.055;
-    rectangle(ax0,'Position',[0.780 yy-0.014 0.018 0.028], ...
-        'FaceColor',legendRows{k,1},'EdgeColor',[0.25 0.25 0.25],'Curvature',[1 1]);
-    text(ax0,0.810,yy,legendRows{k,2},'FontSize',10,'VerticalAlignment','middle');
+for k = 1:numel(legendLabels)
+    yy = 0.770-(k-1)*0.059;
+    plot(ax0,0.788,yy,legendMarkers{k},'MarkerSize',10, ...
+        'MarkerFaceColor',legendColors{k},'MarkerEdgeColor',[0.12 0.17 0.20], ...
+        'LineStyle','none','LineWidth',0.9);
+    text(ax0,0.810,yy,legendLabels{k},'FontSize',10, ...
+        'VerticalAlignment','middle');
 end
 
 nTotal = height(finalTable);
 nOK = sum(finalTable.AllPass);
 nControlled = sum(finalTable.Controlled);
-nReject = nTotal - nOK - nControlled;
-
-text(ax0,0.775,0.500,'Project Summary','FontSize',14,'FontWeight','bold','Color',[0.05 0.16 0.28]);
+nReject = nTotal-nOK-nControlled;
+text(ax0,0.775,0.500,'Project Summary','FontSize',14, ...
+    'FontWeight','bold','Color',[0.05 0.16 0.28]);
 text(ax0,0.775,0.455,sprintf('Total stations: %d',nTotal),'FontSize',10);
-text(ax0,0.775,0.420,sprintf('Accepted: %d',nOK),'FontSize',10,'Color',[0.00 0.40 0.12]);
-text(ax0,0.775,0.385,sprintf('Controlled: %d',nControlled),'FontSize',10,'Color',[0.65 0.38 0.00]);
-text(ax0,0.775,0.350,sprintf('Rejected: %d',nReject),'FontSize',10,'Color',[0.60 0.00 0.00]);
-
+text(ax0,0.775,0.420,sprintf('Accepted: %d',nOK),'FontSize',10);
+text(ax0,0.775,0.385,sprintf('Controlled: %d',nControlled),'FontSize',10);
+text(ax0,0.775,0.350,sprintf('Rejected: %d',nReject),'FontSize',10);
 if ~strcmpi(mapType,'overall')
     if strcmpi(mapType,'reliability')
         scoreMean = mean(finalTable.ReliabilityScore,'omitnan');
@@ -2634,238 +2459,123 @@ if ~strcmpi(mapType,'overall')
     text(ax0,0.775,0.285,sprintf('%s: %.0f%%',scoreLabel,scoreMean*100), ...
         'FontSize',10,'FontWeight','bold');
 end
-
+text(ax0,0.775,0.160,'Shape and colour both encode', ...
+    'FontSize',8.5,'Color',[0.28 0.31 0.35]);
+text(ax0,0.775,0.133,'the quality category.', ...
+    'FontSize',8.5,'Color',[0.28 0.31 0.35]);
 end
 
 %% ========================================================================
-function plotProjectPointsOnMap(mapAx,finalTable,mapType,coordMode,xLimVals,yLimVals)
-
-hold(mapAx,'on');
-
-if strcmpi(coordMode,'lonlat')
-    xVar = finalTable.Lon;
-    yVar = finalTable.Lat;
-else
-    xVar = finalTable.X;
-    yVar = finalTable.Y;
+function plotProjectPointsOnMap(mapAx,finalTable,mapType,xData,yData)
+% Plot symbols first, then station names once each; no overlapping status text.
+valid = isfinite(xData) & isfinite(yData);
+indices = find(valid);
+if isempty(indices); return; end
+for q = 1:numel(indices)
+    i = indices(q);
+    [rgb,markerSymbol] = mapPointStyle(finalTable,i,mapType);
+    plot(mapAx,xData(i),yData(i),markerSymbol, ...
+        'MarkerSize',9,'MarkerFaceColor',rgb, ...
+        'MarkerEdgeColor',[0.12 0.17 0.20], ...
+        'LineStyle','none','LineWidth',0.9);
 end
 
-dy = (yLimVals(2)-yLimVals(1))*0.025;
+% Select label positions from multiple candidates and penalise overlap.
+xLimits = xlim(mapAx); yLimits = ylim(mapAx);
+xSpan = diff(xLimits); ySpan = diff(yLimits);
+xNorm = (xData(indices)-xLimits(1))/xSpan;
+yNorm = (yData(indices)-yLimits(1))/ySpan;
+labelBoxes = zeros(0,4);
 
-for i = 1:height(finalTable)
-    if isnan(xVar(i)) || isnan(yVar(i))
-        continue;
+for q = 1:numel(indices)
+    i = indices(q);
+    name = char(finalTable.Name(i));
+    w = min(0.110,max(0.044,0.014*numel(name)+0.012));
+    h = 0.030;
+    u = xNorm(q); v = yNorm(q);
+    candidates = [ ...
+         u+0.014, v+0.010; ...
+         u+0.014, v-0.010-h; ...
+         u-0.014-w, v+0.010; ...
+         u-0.014-w, v-0.010-h; ...
+         u-w/2, v+0.025; ...
+         u-w/2, v-0.025-h; ...
+         u+0.014, v-h/2; ...
+         u-0.014-w, v-h/2];
+    bestPenalty = inf;
+    bestBox = [];
+    for j = 1:size(candidates,1)
+        b = [candidates(j,1), candidates(j,2), ...
+            candidates(j,1)+w, candidates(j,2)+h];
+        outside = max(0,0.005-b(1))+max(0,b(3)-0.995) + ...
+                  max(0,0.005-b(2))+max(0,b(4)-0.995);
+        penalty = outside*300;
+        for k = 1:size(labelBoxes,1)
+            c = labelBoxes(k,:);
+            overlapX = max(0,min(b(3),c(3))-max(b(1),c(1)));
+            overlapY = max(0,min(b(4),c(4))-max(b(2),c(2)));
+            penalty = penalty + 10*overlapX*overlapY/(w*h);
+        end
+        % Avoid covering other station symbols with labels.
+        for k = 1:numel(indices)
+            if k==q; continue; end
+            if xNorm(k)>b(1)-0.008 && xNorm(k)<b(3)+0.008 && ...
+               yNorm(k)>b(2)-0.008 && yNorm(k)<b(4)+0.008
+                penalty = penalty + 2;
+            end
+        end
+        if penalty < bestPenalty
+            bestPenalty = penalty;
+            bestBox = b;
+        end
     end
-
-    [rgb,labelText] = mapColorAndLabel(finalTable,i,mapType);
-
-    scatter(mapAx,xVar(i),yVar(i),95, ...
-        'MarkerFaceColor',rgb, ...
-        'MarkerEdgeColor',[0.05 0.05 0.05], ...
-        'LineWidth',0.8);
-
-    drawMapLabel(mapAx,xVar(i),yVar(i),['  ' char(finalTable.Name(i))],8.5,true,'middle');
-    drawMapLabel(mapAx,xVar(i),yVar(i)-dy,['  ' labelText],7.2,false,'top');
+    labelBoxes(end+1,:) = bestBox; %#ok<AGROW>
+    xx = xLimits(1)+bestBox(1)*xSpan;
+    yy = yLimits(1)+(bestBox(2)+h/2)*ySpan;
+    text(mapAx,xx,yy,name,'FontSize',8.5,'FontWeight','bold', ...
+        'BackgroundColor','white','Margin',1, ...
+        'HorizontalAlignment','left','VerticalAlignment','middle', ...
+        'Clipping','on','Interpreter','none','Color',[0.11 0.14 0.19]);
 end
-
 end
 
 %% ========================================================================
-function drawMapLabel(ax,x,y,str,fontSize,isBold,verticalAlign)
-% Draw label directly on the map without a black background.
-% A small white halo improves readability over satellite imagery.
-
-if isBold
-    weightVal = 'bold';
-else
-    weightVal = 'normal';
+function [rgb,markerSymbol] = mapPointStyle(T,i,mapType)
+switch lower(mapType)
+    case 'overall'
+        if T.AllPass(i)
+            rgb = [0.00 0.48 0.23]; markerSymbol = 'o';
+        elseif T.Controlled(i)
+            rgb = [0.93 0.62 0.02]; markerSymbol = 's';
+        else
+            rgb = [0.75 0.08 0.12]; markerSymbol = '^';
+        end
+    case {'reliability','clear'}
+        if strcmpi(mapType,'reliability')
+            value = T.ReliabilityScore(i);
+        else
+            value = T.ClearScore(i);
+        end
+        if value >= 0.999
+            rgb = [0.00 0.48 0.23]; markerSymbol = 'o';
+        elseif value >= 0.80
+            rgb = [0.92 0.75 0.05]; markerSymbol = 'd';
+        elseif value >= 0.50
+            rgb = [0.90 0.44 0.05]; markerSymbol = 's';
+        else
+            rgb = [0.75 0.08 0.12]; markerSymbol = '^';
+        end
 end
-
-% Halo offsets in data units
-xl = xlim(ax);
-yl = ylim(ax);
-dx = (xl(2)-xl(1))*0.0012;
-dy = (yl(2)-yl(1))*0.0012;
-
-offsets = [ ...
-    -dx  0; ...
-     dx  0; ...
-      0 -dy; ...
-      0  dy; ...
-    -dx -dy; ...
-    -dx  dy; ...
-     dx -dy; ...
-     dx  dy];
-
-for q = 1:size(offsets,1)
-    text(ax,x+offsets(q,1),y+offsets(q,2),str, ...
-        'FontSize',fontSize, ...
-        'FontWeight',weightVal, ...
-        'Color','white', ...
-        'VerticalAlignment',verticalAlign, ...
-        'Interpreter','none');
-end
-
-text(ax,x,y,str, ...
-    'FontSize',fontSize, ...
-    'FontWeight',weightVal, ...
-    'Color','black', ...
-    'VerticalAlignment',verticalAlign, ...
-    'Interpreter','none');
-
 end
 
 %% ========================================================================
 function setupMapLimits(mapAx,X,Y,xLab,yLab)
-
-padX = max((max(X)-min(X))*0.08,1e-6);
-padY = max((max(Y)-min(Y))*0.08,1e-6);
-
+padX = max((max(X)-min(X))*0.14,0.05);
+padY = max((max(Y)-min(Y))*0.14,0.05);
 xlim(mapAx,[min(X)-padX max(X)+padX]);
 ylim(mapAx,[min(Y)-padY max(Y)+padY]);
 xlabel(mapAx,xLab); ylabel(mapAx,yLab);
 grid(mapAx,'on'); box(mapAx,'on');
-
-end
-
-%% ========================================================================
-function satCache = getEsriProjectSatellite(finalTable)
-% Downloads one project-wide Esri World Imagery background image.
-% The function fails gracefully and returns satCache.ok=false when offline.
-
-satCache = struct();
-satCache.img = [];
-satCache.lonLim = [NaN NaN];
-satCache.latLim = [NaN NaN];
-satCache.ok = false;
-satCache.note = 'Satellite background unavailable';
-
-valid = ~isnan(finalTable.Lon) & ~isnan(finalTable.Lat);
-if ~any(valid)
-    satCache.note = 'No latitude/longitude values available';
-    return;
-end
-
-lon = finalTable.Lon(valid);
-lat = finalTable.Lat(valid);
-
-lonMin = min(lon);
-lonMax = max(lon);
-latMin = min(lat);
-latMax = max(lat);
-
-% Add padding; enforce minimum extent for very small station arrays.
-lonPad = max((lonMax-lonMin)*0.18,0.0020);
-latPad = max((latMax-latMin)*0.18,0.0020);
-
-lonMin = lonMin - lonPad;
-lonMax = lonMax + lonPad;
-latMin = latMin - latPad;
-latMax = latMax + latPad;
-
-% Match bbox aspect ratio to image aspect ratio.
-imgW = 1200;
-imgH = 850;
-targetAspect = imgW/imgH;
-
-lonSpan = lonMax-lonMin;
-latSpan = latMax-latMin;
-currentAspect = lonSpan/max(latSpan,eps);
-
-lonCenter = (lonMin+lonMax)/2;
-latCenter = (latMin+latMax)/2;
-
-if currentAspect < targetAspect
-    lonSpanNew = latSpan*targetAspect;
-    lonMin = lonCenter - lonSpanNew/2;
-    lonMax = lonCenter + lonSpanNew/2;
-else
-    latSpanNew = lonSpan/targetAspect;
-    latMin = latCenter - latSpanNew/2;
-    latMax = latCenter + latSpanNew/2;
-end
-
-satCache.lonLim = [lonMin lonMax];
-satCache.latLim = [latMin latMax];
-
-baseURL = 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export';
-
-query = sprintf(['?bbox=%.8f,%.8f,%.8f,%.8f' ...
-    '&bboxSR=4326&imageSR=4326&size=%d,%d&format=png32' ...
-    '&transparent=false&f=image'], ...
-    lonMin,latMin,lonMax,latMax,imgW,imgH);
-
-url = [baseURL query];
-
-tmpPng = [tempname '.png'];
-
-try
-    options = weboptions('Timeout',12);
-    websave(tmpPng,url,options);
-    satCache.img = imread(tmpPng);
-    satCache.ok = true;
-    satCache.note = 'Esri World Imagery';
-    delete(tmpPng);
-catch ME
-    satCache.ok = false;
-    satCache.note = ['Satellite background unavailable: ' ME.message];
-    try
-        if exist(tmpPng,'file'); delete(tmpPng); end
-    catch
-    end
-end
-
-end
-%% ========================================================================
-function addNorthArrow(ax,x,y)
-
-text(ax,x,y+0.030,'N', ...
-    'FontSize',11, ...
-    'FontWeight','bold', ...
-    'HorizontalAlignment','center', ...
-    'Color',[0.05 0.05 0.05]);
-
-annotation(get(ax,'Parent'),'arrow',[x x],[y-0.010 y+0.025], ...
-    'Color',[0.05 0.05 0.05], ...
-    'LineWidth',1.4);
-
-end
-
-%% ========================================================================
-function [rgb,labelText] = mapColorAndLabel(finalTable,i,mapType)
-
-switch lower(mapType)
-    case 'overall'
-        if finalTable.AllPass(i)
-            rgb = [0.00 0.62 0.20]; labelText = 'Accepted';
-        elseif finalTable.Controlled(i)
-            rgb = [0.95 0.66 0.00]; labelText = 'Controlled';
-        else
-            rgb = [0.80 0.05 0.05]; labelText = 'Rejected';
-        end
-    case 'reliability'
-        score = finalTable.ReliabilityScore(i);
-        rgb = scoreToRGB(score); labelText = sprintf('R=%.0f%%',score*100);
-    case 'clear'
-        score = finalTable.ClearScore(i);
-        rgb = scoreToRGB(score); labelText = sprintf('C=%.0f%%',score*100);
-end
-
-end
-
-%% ========================================================================
-function rgb = scoreToRGB(score)
-
-if score >= 0.999
-    rgb = [0.00 0.62 0.20];
-elseif score >= 0.80
-    rgb = [0.95 0.78 0.00];
-elseif score >= 0.50
-    rgb = [0.95 0.45 0.00];
-else
-    rgb = [0.80 0.05 0.05];
-end
-
 end
 
 %% ========================================================================
@@ -2983,8 +2693,9 @@ rectangle(ax,'Position',[0.045 0.120 0.565 0.735], ...
 
 n = height(finalTable);
 critNames = {'V1','V2','V3','V4','V5','V6','V7','V8','V9'};
-critDesc = {'f0 > 10/Iw','nc(f0) > 200','s sigma','clear low','clear high', ...
-            'A0 > 2','max f0 band','sf < ef0','sigma limit'};
+critDesc = {'f0 > 10/Iw','nc(f0) > 200','amplitude stability', ...
+            'clear low','clear high','A0 > 2','peak +/-5%', ...
+            'sigma_f < epsilon(f0)','sigma_A(f0) < theta(f0)'};
 
 passCounts = [sum(finalTable.V1) sum(finalTable.V2) sum(finalTable.V3) ...
               sum(finalTable.V4) sum(finalTable.V5) sum(finalTable.V6) ...
@@ -3014,7 +2725,7 @@ for k = 1:9
     end
 
     text(ax,colX(1),yy,critNames{k},'FontSize',9,'FontWeight','bold','VerticalAlignment','middle');
-    text(ax,colX(2),yy,critDesc{k},'FontSize',9,'VerticalAlignment','middle');
+    text(ax,colX(2),yy,critDesc{k},'FontSize',8,'VerticalAlignment','middle');
     text(ax,colX(3),yy,sprintf('%d',passCounts(k)),'FontSize',9,'VerticalAlignment','middle');
     text(ax,colX(4),yy,sprintf('%d',failCounts(k)),'FontSize',9,'VerticalAlignment','middle');
     text(ax,colX(5),yy,sprintf('%.1f',passPct(k)),'FontSize',9,'VerticalAlignment','middle');
@@ -3142,8 +2853,9 @@ text(ax0,0.045,0.410,'SESAME Criteria', ...
     'FontSize',13,'FontWeight','bold','Color',[0.05 0.16 0.28]);
 
 critNames = {'V1','V2','V3','V4','V5','V6','V7','V8','V9'};
-critDesc = {'f0 > 10/Iw','nc(f0) > 200','s sigma','clear low','clear high', ...
-            'A0 > 2','max f0 band','sf < ef0','sigma limit'};
+critDesc = {'f0 > 10/Iw','nc(f0) > 200','amplitude stability', ...
+            'clear low','clear high','A0 > 2','peak +/-5%', ...
+            'sigma_f < epsilon(f0)','sigma_A(f0) < theta(f0)'};
 
 for k = 1:9
     yy = 0.372 - (k-1)*0.034;
