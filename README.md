@@ -181,7 +181,7 @@ Detailed step-by-step instructions for using the software are available in:
 
 ## Source Code Availability
 
-The complete MATLAB source code is provided openly in this repository as individual source files and can be downloaded without authentication.
+The complete MATLAB source code is provided openly in this repository as a single MATLAB source file and can be downloaded without authentication.
 
 The software is intended to support transparent and reproducible application of the SESAME quality-assessment procedure to Geopsy-generated HVSR datasets.
 
