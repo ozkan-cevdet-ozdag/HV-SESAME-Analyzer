@@ -3640,6 +3640,9 @@ plot(ax,f,lo,'--','Color',colors.bounds,'LineWidth',0.9,'DisplayName','Mean - 1 
 plot(ax,f,hi,'--','Color',colors.bounds,'LineWidth',0.9,'DisplayName','Mean + 1 SD');
 plot(ax,f,a,'-','Color',colors.mean,'LineWidth',1.8,'DisplayName','Mean H/V');
 
+% Fix the final vertical axis limits before drawing reference lines.
+ylim(ax,[0,max(hi)*1.38]);
+
 vline(ax,peak,'-',colors.fail,1.2);
 vline(ax,0.95*peak,':',colors.guide,0.9);
 vline(ax,1.05*peak,':',colors.guide,0.9);
@@ -3655,7 +3658,6 @@ plot(ax,f(idx),a(idx),symbol,'Color',color, ...
 set(ax,'XScale','log','Color','white','XColor',[0.12 0.18 0.25], ...
     'YColor',[0.12 0.18 0.25]);
 xlim(ax,[min(f) max(f)]);
-ylim(ax,[0,max(hi)*1.38]);
 grid(ax,'on'); box(ax,'on');
 xlabel(ax,'Frequency (Hz)'); ylabel(ax,'H/V amplitude');
 
